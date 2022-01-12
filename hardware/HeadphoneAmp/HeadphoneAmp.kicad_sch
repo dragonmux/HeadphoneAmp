@@ -2638,7 +2638,7 @@
     (uuid ad1c7d30-fa47-47fd-bb07-e836ca23dcc6)
     (property "Reference" "J1" (id 0) (at 38.1 71.12 0))
     (property "Value" "Preamp Input" (id 1) (at 35.56 76.2 90))
-    (property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical" (id 2) (at 38.1 76.2 0)
+    (property "Footprint" "rhais_connector-pinheader:PinHeader_1x03_P2.54mm_Vertical" (id 2) (at 38.1 76.2 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 38.1 76.2 0)
@@ -3539,7 +3539,7 @@
       (reference "H4") (unit 1) (value "MountingHole_Pad") (footprint "MountingHole:MountingHole_3.2mm_M3_Pad")
     )
     (path "/ad1c7d30-fa47-47fd-bb07-e836ca23dcc6"
-      (reference "J1") (unit 1) (value "Preamp Input") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical")
+      (reference "J1") (unit 1) (value "Preamp Input") (footprint "rhais_connector-pinheader:PinHeader_1x03_P2.54mm_Vertical")
     )
     (path "/24b3bc61-d595-4851-a8f5-193039965902"
       (reference "J2") (unit 1) (value "Source") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x01_P2.54mm_Vertical")
