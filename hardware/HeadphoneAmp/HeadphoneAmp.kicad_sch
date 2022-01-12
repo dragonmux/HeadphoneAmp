@@ -1995,7 +1995,7 @@
     (uuid 24b3bc61-d595-4851-a8f5-193039965902)
     (property "Reference" "J2" (id 0) (at 60.96 22.86 0))
     (property "Value" "Source" (id 1) (at 60.96 27.94 0))
-    (property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x01_P2.54mm_Vertical" (id 2) (at 60.96 25.4 0)
+    (property "Footprint" "rhais_connector-pinheader:PinHeader_1x01_P2.54mm_Vertical" (id 2) (at 60.96 25.4 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 60.96 25.4 0)
@@ -3392,16 +3392,16 @@
       (reference "C12") (unit 1) (value "2n2") (footprint "rhais_rcl:C0603")
     )
     (path "/090c9c05-427a-444a-8689-526c4a2a5969/d376684b-c98b-4996-a53e-16c44de4793c"
-      (reference "C13") (unit 1) (value "680u") (footprint "Capacitor_THT:CP_Radial_D10.0mm_P5.00mm")
+      (reference "C13") (unit 1) (value "680u") (footprint "rhais_rcl:CP_Radial_D10.0mm_P5.00mm")
     )
     (path "/090c9c05-427a-444a-8689-526c4a2a5969/2500a677-af13-47ef-af71-92d4c6b9af26"
-      (reference "C14") (unit 1) (value "680u") (footprint "Capacitor_THT:CP_Radial_D10.0mm_P5.00mm")
+      (reference "C14") (unit 1) (value "680u") (footprint "rhais_rcl:CP_Radial_D10.0mm_P5.00mm")
     )
     (path "/090c9c05-427a-444a-8689-526c4a2a5969/88bcbb96-1352-4e82-adab-44016974caa4"
-      (reference "C15") (unit 1) (value "330u") (footprint "Capacitor_THT:CP_Radial_D8.0mm_P3.50mm")
+      (reference "C15") (unit 1) (value "330u") (footprint "rhais_rcl:CP_Radial_D8.0mm_P3.50mm")
     )
     (path "/090c9c05-427a-444a-8689-526c4a2a5969/70278fec-9fb2-4c5d-8718-ad8b10962001"
-      (reference "C16") (unit 1) (value "330u") (footprint "Capacitor_THT:CP_Radial_D8.0mm_P3.50mm")
+      (reference "C16") (unit 1) (value "330u") (footprint "rhais_rcl:CP_Radial_D8.0mm_P3.50mm")
     )
     (path "/090c9c05-427a-444a-8689-526c4a2a5969/28aaba3d-12b6-418b-a744-2c9be55de702"
       (reference "C17") (unit 1) (value "1u") (footprint "rhais_rcl:CP_EIA-3216-18_A")
@@ -3521,10 +3521,10 @@
       (reference "C56") (unit 1) (value "0u47") (footprint "rhais_rcl:CP_EIA-3216-18_A")
     )
     (path "/090c9c05-427a-444a-8689-526c4a2a5969/06911b3c-ed0a-4e2d-88a7-7f4be8891733"
-      (reference "D1") (unit 1) (value "B160-13-F") (footprint "Diode_SMD:D_SMA")
+      (reference "D1") (unit 1) (value "B160-13-F") (footprint "rhais_diode:D_SMA")
     )
     (path "/090c9c05-427a-444a-8689-526c4a2a5969/8c5a408b-1fa2-4c32-aba4-7aa1052abd18"
-      (reference "D2") (unit 1) (value "B160-13-F") (footprint "Diode_SMD:D_SMA")
+      (reference "D2") (unit 1) (value "B160-13-F") (footprint "rhais_diode:D_SMA")
     )
     (path "/58956b23-7a9e-4cb8-a8aa-a3b38807c559"
       (reference "H1") (unit 1) (value "MountingHole_Pad") (footprint "MountingHole:MountingHole_3.2mm_M3_Pad")
@@ -3542,7 +3542,7 @@
       (reference "J1") (unit 1) (value "Preamp Input") (footprint "rhais_connector-pinheader:PinHeader_1x03_P2.54mm_Vertical")
     )
     (path "/24b3bc61-d595-4851-a8f5-193039965902"
-      (reference "J2") (unit 1) (value "Source") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x01_P2.54mm_Vertical")
+      (reference "J2") (unit 1) (value "Source") (footprint "rhais_connector-pinheader:PinHeader_1x01_P2.54mm_Vertical")
     )
     (path "/39e48209-95b8-454d-a3ad-2994fb8b8c0a"
       (reference "J3") (unit 1) (value "1503_02") (footprint "rhais_connector-lumberg:1503-02")
@@ -3566,10 +3566,10 @@
       (reference "J9") (unit 1) (value "Out L") (footprint "rhais_connector-pinheader:PinHeader_1x02_P2.54mm_Vertical")
     )
     (path "/090c9c05-427a-444a-8689-526c4a2a5969/4b2c7b21-888f-49ea-8818-782e678821c4"
-      (reference "J10") (unit 1) (value "Barrel_Jack_Switch") (footprint "Connector_BarrelJack:BarrelJack_GCT_DCJ200-10-A_Horizontal")
+      (reference "J10") (unit 1) (value "Barrel_Jack_Switch") (footprint "rhais_connector-jack:BarrelJack_GCT_DCJ200-10-A_Horizontal")
     )
     (path "/090c9c05-427a-444a-8689-526c4a2a5969/dd810f41-bbfe-43b8-8214-aa818844392c"
-      (reference "J11") (unit 1) (value "Router Power") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x01_P2.54mm_Vertical")
+      (reference "J11") (unit 1) (value "Router Power") (footprint "rhais_connector-pinheader:PinHeader_1x01_P2.54mm_Vertical")
     )
     (path "/83f821ce-fe44-4600-b473-90e23f79c6dc/f4d33b1b-105b-40d7-ae29-0a0c74ed0cf4"
       (reference "R1") (unit 1) (value "274R") (footprint "rhais_rcl:R0603")
@@ -3764,10 +3764,10 @@
       (reference "U6") (unit 3) (value "NJM5532M") (footprint "rhais_package-smd:SO-8_5.3x5.3mm_P1.27mm")
     )
     (path "/090c9c05-427a-444a-8689-526c4a2a5969/f9ff6624-58ac-4f2a-8494-ba0471b48006"
-      (reference "U7") (unit 1) (value "L7812ACV") (footprint "Package_TO_SOT_THT:TO-220-3_Vertical")
+      (reference "U7") (unit 1) (value "L7812ACV") (footprint "rhais_package-to:TO-220-3_Vertical")
     )
     (path "/090c9c05-427a-444a-8689-526c4a2a5969/b43f46da-c122-4689-8cf0-8d7c66a60c5b"
-      (reference "U8") (unit 1) (value "L7912ACV") (footprint "Package_TO_SOT_THT:TO-220-3_Vertical")
+      (reference "U8") (unit 1) (value "L7912ACV") (footprint "rhais_package-to:TO-220-3_Vertical")
     )
     (path "/090c9c05-427a-444a-8689-526c4a2a5969/d1320b24-3b97-4732-bb23-3f41d988cd00"
       (reference "U9") (unit 1) (value "MCP1755ST-5002xDB") (footprint "rhais_package-smd:SOT-223")
