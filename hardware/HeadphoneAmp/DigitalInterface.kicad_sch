@@ -1971,20 +1971,10 @@
     (uuid fbca9fb7-1509-4777-b999-e8c48a11dcd9)
   )
 
-  (text "❯ icepll -i 24.576 -o 36.864\n\nF_PLLIN:    24.576 MHz (given)\nF_PLLOUT:   36.864 MHz (requested)\nF_PLLOUT:   36.864 MHz (achieved)\n\nFEEDBACK: SIMPLE\nF_PFD:   24.576 MHz\nF_VCO:  589.824 MHz\n\nDIVR:  0 (4'b0000)\nDIVF: 23 (7'b0010111)\nDIVQ:  4 (3'b100)\n\nFILTER_RANGE: 2 (3'b010)\n"
-    (at 127 190.5 0)
-    (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid 2d52e758-eed7-42c7-93bb-a0fb4b4f3f20)
-  )
   (text "SYS_CLK must be one of\n24.576MHz (32kHz)\n33.8688MHz (44k1Hz)\n36.864MHz (48kHz+)\ndepending on sampling frequency"
     (at 114.3 139.7 0)
     (effects (font (size 1.27 1.27)) (justify right bottom))
     (uuid 728a8e27-eaef-4708-962f-f44cc20534fe)
-  )
-  (text "❯ icepll -b -o 33.8688\n\nF_PLLIN:    11.059 MHz (given)\nF_PLLOUT:   33.869 MHz (requested)\nF_PLLOUT:   33.869 MHz (achieved)\n\nFEEDBACK: SIMPLE\nF_PFD:   11.059 MHz\nF_VCO:  541.901 MHz\n\nDIVR:  0 (4'b0000)\nDIVF: 48 (7'b0110000)\nDIVQ:  4 (3'b100)\n\nFILTER_RANGE: 1 (3'b001)"
-    (at 88.9 190.5 0)
-    (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid 8c9a7c3f-7001-4ff4-84f2-ceebbba8b103)
   )
   (text "~{RST} is only needed if we\nwant to manually reset the\nchip, but if we're smart with\nSPI, this is unnecessary"
     (at 41.91 78.74 0)
