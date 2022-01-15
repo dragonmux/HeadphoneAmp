@@ -1018,8 +1018,8 @@
     )
   )
 
-  (bus_alias "ULPI" (members "STP" "~{RST}" "D[0..7]" "DIR" "NXT" "CLK"))
   (bus_alias "SPI" (members "CLK" "COPI" "CIPO"))
+  (bus_alias "ULPI" (members "STP" "~{RST}" "D[0..7]" "DIR" "NXT" "CLK"))
   (junction (at 223.52 88.9) (diameter 0) (color 0 0 0 0)
     (uuid 0b8b88dd-3815-45d8-94ca-c675dbf064b9)
   )
