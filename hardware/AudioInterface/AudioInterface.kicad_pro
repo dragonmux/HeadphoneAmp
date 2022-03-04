@@ -382,7 +382,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "Processor.kicad_pro",
+    "filename": "AudioInterface.kicad_pro",
     "version": 1
   },
   "net_settings": {
@@ -438,7 +438,7 @@
       "netlist": "",
       "specctra_dsn": "",
       "step": "",
-      "vrml": ""
+      "vrml": "../case/AudioInterface.wrl"
     },
     "page_layout_descr_file": ""
   },

@@ -1,7 +1,7 @@
 (kicad_pcb (version 20211014) (generator pcbnew)
 
   (general
-    (thickness 2.035)
+    (thickness 1.59)
   )
 
   (paper "A4")
@@ -45,11 +45,11 @@
       (layer "F.Paste" (type "Top Solder Paste"))
       (layer "F.Mask" (type "Top Solder Mask") (color "Blue") (thickness 0.01) (material "Epoxy") (epsilon_r 3.3) (loss_tangent 0))
       (layer "F.Cu" (type "copper") (thickness 0.035))
-      (layer "dielectric 1" (type "core") (thickness 0.2) (material "FR4") (epsilon_r 4.5) (loss_tangent 0.02))
+      (layer "dielectric 1" (type "core") (thickness 0.2 locked) (material "FR4") (epsilon_r 4.5) (loss_tangent 0.02))
       (layer "In1.Cu" (type "copper") (thickness 0.0175))
-      (layer "dielectric 2" (type "prepreg") (thickness 1.51) (material "FR4") (epsilon_r 4.5) (loss_tangent 0.02))
+      (layer "dielectric 2" (type "prepreg") (thickness 1.065 locked) (material "FR4") (epsilon_r 4.5) (loss_tangent 0.02))
       (layer "In2.Cu" (type "copper") (thickness 0.0175))
-      (layer "dielectric 3" (type "core") (thickness 0.2) (material "FR4") (epsilon_r 4.5) (loss_tangent 0.02))
+      (layer "dielectric 3" (type "core") (thickness 0.2 locked) (material "FR4") (epsilon_r 4.5) (loss_tangent 0.02))
       (layer "B.Cu" (type "copper") (thickness 0.035))
       (layer "B.Mask" (type "Bottom Solder Mask") (color "Blue") (thickness 0.01) (material "Epoxy") (epsilon_r 3.3) (loss_tangent 0))
       (layer "B.Paste" (type "Bottom Solder Paste"))
@@ -3329,6 +3329,7 @@
   (segment (start 111.063856 109.419511) (end 110.390489 108.746144) (width 0.4) (layer "F.Cu") (net 17) (tstamp f043bc3d-e5e9-4d95-affd-e6fa0ed36ca7))
   (segment (start 124.641441 121.2) (end 124.21048 121.630961) (width 0.4) (layer "F.Cu") (net 17) (tstamp f04c5edf-68ff-4456-8968-2f51ee6a6164))
   (segment (start 103.40048 109.051671) (end 103.40048 115.748329) (width 0.4) (layer "F.Cu") (net 17) (tstamp f0b936bd-5eb6-4d15-a38e-a50936aab665))
+  (segment (start 126.709511 125.582435) (end 126.709511 126.1) (width 0.4) (layer "F.Cu") (net 17) (tstamp f0d59009-bdb6-4150-8249-d2a9c5928391))
   (segment (start 105.983856 109.419511) (end 106.936144 109.419511) (width 0.4) (layer "F.Cu") (net 17) (tstamp f218c1c7-6b14-4e49-b760-adf661854adc))
   (segment (start 111.23 94) (end 112.520489 94) (width 0.4) (layer "F.Cu") (net 17) (tstamp f28582b6-97a2-4ad1-b144-de9cef81021e))
   (segment (start 113.200022 107.652173) (end 114.59952 109.051671) (width 0.4) (layer "F.Cu") (net 17) (tstamp f4300fc4-c7cd-42ce-a1f6-1e2245b9e8f9))
