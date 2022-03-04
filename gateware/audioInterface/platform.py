@@ -1,5 +1,6 @@
 from amaranth.vendor.lattice_ice40 import LatticeICE40Platform
 from amaranth.build import Resource, Subsignal, Pins, Clock, Attrs
+from amaranth_boards.resources.interface import SPIResource, ULPIResource
 
 __all__ = (
 	'AudioInterfacePlatform',
@@ -12,13 +13,44 @@ class AudioInterfacePlatform(LatticeICE40Platform):
 
 	resources = [
 		Resource(
+			'sys_clk', 0,
+			Pins('B6', dir = 'i', assert_width = 1),
+			Clock(36.864e6),
+			Attrs(GLOBAL = True, IO_STANDARD = 'SB_LVCMOS')
+		),
+
+		SPIResource(
+			'cfg_spi', 0,
+			clk = 'F11',
+			copi = 'F10',
+			cipo = 'G11',
+			cs_n = 'E11 A7',
+			attrs = Attrs(IO_STANDARD = 'SB_LVCMOS')
+		),
+
+		ULPIResource(
 			'ulpi', 0,
-			Subsignal('clk', Pins('G1', dir = 'i'), Clock(60e6)),
-			Subsignal('data', Pins('E1 E2 F1 F2 G2 H1 H2 J1', dir = 'io')),
-			Subsignal('dir', Pins('D1', dir = 'i')),
-			Subsignal('nxt', Pins('D2', dir = 'i')),
-			Subsignal('stp', Pins('C2', dir = 'o')),
-			Subsignal('rst', Pins('C1', dir = 'o')),
+			clk = 'G1', clk_dir = 'i',
+			data = 'E1 F2 F1 G2 H2 H1 J2 J1',
+			dir = 'D1',
+			nxt = 'E2',
+			stp = 'D2',
+			rst = 'C1',
+			attrs = Attrs(IO_STANDARD = 'SB_LVCMOS')
+		),
+
+		Resource(
+			'i2s', 0,
+			Subsignal('clk', Pins('E10', dir = 'o', assert_width = 1)),
+			# right/!left
+			Subsignal('rnl', Pins('D10', dir = 'o', assert_width = 1)),
+			Subsignal('data', Pins('D11', dir = 'o', assert_width = 1)),
+			Attrs(IO_STANDARD = 'SB_LVCMOS')
+		),
+
+		Resource(
+			'spdif', 0,
+			Subsignal('data', Pins('A1', dir = 'i', assert_width = 1)),
 			Attrs(IO_STANDARD = 'SB_LVCMOS')
 		),
 	]
