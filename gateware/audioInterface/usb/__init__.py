@@ -84,7 +84,6 @@ class USBInterface(Elaboratable):
 						# No controls
 						terminalDesc.bmControls = 0x00000000
 						terminalDesc.bCSourceID = 9
-						terminalDesc.wClusterDescrID = 0
 						terminalDesc.wExTerminalDescrID = 0
 						terminalDesc.wConnectorsDescrID = 4
 						terminalDesc.wTerminalDescrStr = 0

@@ -44,11 +44,11 @@ MonoFeatureUnitDescriptor = DescriptorFormat(
 	'bDescriptorSubtype'  / DescriptorNumber(AudioClassSpecificACInterfaceDescriptorSubtypes.FEATURE_UNIT),
 	'bUnitID'             / DescriptorField(description = 'unique identifier for the feature unit within the audio function.'),
 	'bSourceID'           / DescriptorField(description = 'ID of the unit or terminal which is connected to this feature unit'),
-	'bmControls'         / construct.Sequence(
+	'bmaControls'         / construct.Sequence(
 			construct.Const(0x00000003, construct.Int32ul),
 			construct.Const(0x0000000C, construct.Int32ul)
 		),
-	'wFeatureDescrStr'    / DescriptorNumber(0),
+	'wFeatureDescrStr'    / construct.Const(0, construct.Int16ul),
 )
 
 StereoFeatureUnitDescriptor = DescriptorFormat(
@@ -57,12 +57,12 @@ StereoFeatureUnitDescriptor = DescriptorFormat(
 	'bDescriptorSubtype'  / DescriptorNumber(AudioClassSpecificACInterfaceDescriptorSubtypes.FEATURE_UNIT),
 	'bUnitID'             / DescriptorField(description = 'unique identifier for the feature unit within the audio function.'),
 	'bSourceID'           / DescriptorField(description = 'ID of the unit or terminal which is connected to this feature unit'),
-	'bmControls'         / construct.Sequence(
+	'bmaControls'         / construct.Sequence(
 			construct.Const(0x00000003, construct.Int32ul),
 			construct.Const(0x0000000C, construct.Int32ul),
 			construct.Const(0x0000000C, construct.Int32ul)
 		),
-	'wFeatureDescrStr'    / DescriptorNumber(0),
+	'wFeatureDescrStr'    / construct.Const(0, construct.Int16ul),
 )
 
 ConnectorDescriptor = DescriptorFormat(
