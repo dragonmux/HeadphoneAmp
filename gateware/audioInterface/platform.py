@@ -35,7 +35,7 @@ class AudioInterfacePlatform(LatticeICE40Platform):
 			dir = 'D1',
 			nxt = 'E2',
 			stp = 'D2',
-			rst = 'C1',
+			rst = 'C1', rst_invert = True,
 			attrs = Attrs(IO_STANDARD = 'SB_LVCMOS')
 		),
 
