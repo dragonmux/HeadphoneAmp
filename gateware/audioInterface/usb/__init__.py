@@ -76,4 +76,11 @@ class USBInterface(Elaboratable):
 
 		descriptors.add_language_descriptor((LanguageIDs.ENGLISH_US, ))
 		device.add_standard_control_endpoint(descriptors)
+
+		# Signal that we always want LUNA to try connecting
+		m.d.comb += [
+			device.connect.eq(1),
+			device.low_speed_only.eq(0),
+			device.full_speed_only.eq(0),
+		]
 		return m

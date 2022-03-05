@@ -11,4 +11,5 @@ class AudioInterface(Elaboratable):
 		m.domains += ClockDomain('usb')
 		m.submodules.usb = USBInterface(resource = ('ulpi', 0))
 
+		m.d.comb += ResetSignal('usb').eq(0)
 		return m
