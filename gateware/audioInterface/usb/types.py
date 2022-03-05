@@ -23,7 +23,6 @@ __all__ = (
 class HeaderDescriptorEmitter(ComplexDescriptorEmitter):
 	def __init__(self):
 		super().__init__(self.DESCRIPTOR_FORMAT)
-		self._subordinates = []
 
 	@cached_property
 	def DESCRIPTOR_FORMAT(self):
@@ -41,6 +40,7 @@ class HeaderDescriptorEmitter(ComplexDescriptorEmitter):
 			subordinate = subordinate.emit()
 		else:
 			subordinate = bytes(subordinate)
+		self._subordinates.append(subordinate)
 
 	def _pre_emit(self):
 		subordinate_length = sum(len(sub) for sub in self._subordinates)
