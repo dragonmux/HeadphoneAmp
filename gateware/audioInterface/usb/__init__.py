@@ -118,7 +118,26 @@ class USBInterface(Elaboratable):
 				interfaceDesc.bInterfaceClass = AudioInterfaceClassCode.AUDIO
 				interfaceDesc.bInterfaceSubclass = AudioInterfaceSubclassCodes.AUDIO_STREAMING
 				interfaceDesc.bInterfaceProtocol = AudioInterfaceProtocolCodes.IP_VERSION_03_00
+
+			with configDesc.InterfaceDescriptor() as interfaceDesc:
+				interfaceDesc.bInterfaceNumber = 1
+				interfaceDesc.bAlternateSetting = 1
+				interfaceDesc.bInterfaceClass = AudioInterfaceClassCode.AUDIO
+				interfaceDesc.bInterfaceSubclass = AudioInterfaceSubclassCodes.AUDIO_STREAMING
+				interfaceDesc.bInterfaceProtocol = AudioInterfaceProtocolCodes.IP_VERSION_03_00
 				interfaceDesc.iInterface = 'Output stream interface'
+
+				with ClassSpecificAudioStreamingInterfaceDescriptor(interfaceDesc) as streamDesc:
+					streamDesc.bTerminalLink = 1
+					# No controls
+					streamDesc.bmControls = 0x00000000
+					streamDesc.wClusterDescrID = 2
+					streamDesc.bmFormats = AudioDataFormats.PCM
+					# 16-bit PCM audio here please
+					streamDesc.bSubslotSize = 2
+					streamDesc.bBitResolution = 16
+					streamDesc.bmAuxProtocols = 0x0000
+					streamDesc.bControlSize = 0
 
 				with interfaceDesc.EndpointDescriptor() as ep1Out:
 					ep1Out.bEndpointAddress = 0x01

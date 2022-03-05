@@ -1,8 +1,11 @@
 from functools import cached_property
 from usb_protocol.emitters.descriptor import ConstructEmitter, ComplexDescriptorEmitter
-from usb_protocol.emitters.descriptors.standard import InterfaceAssociationDescriptorEmitter
+from usb_protocol.emitters.descriptors.standard import (
+	InterfaceDescriptorEmitter, InterfaceAssociationDescriptorEmitter
+)
 from usb_protocol.emitters.descriptors.uac3 import (
-	InputTerminalDescriptorEmitter, OutputTerminalDescriptorEmitter
+	InputTerminalDescriptorEmitter, OutputTerminalDescriptorEmitter,
+	ClassSpecificAudioStreamingInterfaceDescriptorEmitter
 )
 from .descriptors import *
 
@@ -12,6 +15,7 @@ __all__ = (
 	'OutputTerminalDescriptor',
 	'FeatureUnitDescriptor',
 	'ClockSourceDescriptor',
+	'ClassSpecificAudioStreamingInterfaceDescriptor',
 	'ConnectorDescriptor',
 	'AudioChannels',
 	'ConnectorAttributes',
@@ -98,6 +102,10 @@ def ClockSourceDescriptorEmitter():
 class ClockSourceDescriptor(DescriptorContextManager):
 	ParentDescriptor = HeaderDescriptorEmitter
 	DescriptorEmitter = lambda self: ClockSourceDescriptorEmitter()
+
+class ClassSpecificAudioStreamingInterfaceDescriptor(DescriptorContextManager):
+	ParentDescriptor = InterfaceDescriptorEmitter
+	DescriptorEmitter = lambda self: ClassSpecificAudioStreamingInterfaceDescriptorEmitter()
 
 def ConnectorDescriptorEmitter():
 	from .descriptors import ConnectorDescriptor
