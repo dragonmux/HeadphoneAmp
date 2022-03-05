@@ -18,8 +18,6 @@ class USBInterface(Elaboratable):
 	def elaborate(self, platform):
 		m = Module()
 		self.ulpiInterface = platform.request(*self._ulpiResource)
-		# Constrain the ULPI clock to 60MHz
-		platform.add_clock_constraint(self.ulpiInterface.clk.i, 60e6)
 		m.submodules.device = device = USBDevice(bus = self.ulpiInterface, handle_clocking = True)
 
 		descriptors = DeviceDescriptorCollection()
