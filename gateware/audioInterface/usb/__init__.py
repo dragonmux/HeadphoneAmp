@@ -59,6 +59,50 @@ class USBInterface(Elaboratable):
 				interfaceDesc.bInterfaceProtocol = AudioInterfaceProtocolCodes.IP_VERSION_03_00
 				interfaceDesc.iInterface = 'Control interface'
 
+				with HeaderDescriptor(interfaceDesc) as headerDesc:
+					headerDesc.bCategory = AudioFunctionCategoryCodes.HEADPHONE
+					# Read-only latency control
+					headerDesc.bmControls = 0x00000001
+
+					with InputTerminalDescriptor(headerDesc) as terminalDesc:
+						terminalDesc.bTerminalID = 1
+						terminalDesc.wTerminalType = USBTerminalTypes.USB_STREAMING
+						terminalDesc.bAssocTerminal = 0
+						terminalDesc.bCSourceID = 9
+						# No controls
+						terminalDesc.bmControls = 0x00000000
+						terminalDesc.wClusterDescrID = 0
+						terminalDesc.wExTerminalDescrID = 0
+						terminalDesc.wConnectorsDescrID = 0
+						terminalDesc.wTerminalDescrStr = 0
+
+					with OutputTerminalDescriptor(headerDesc) as terminalDesc:
+						terminalDesc.bTerminalID = 3
+						terminalDesc.wTerminalType = OutputTerminalTypes.HEADPHONES
+						terminalDesc.bAssocTerminal = 0
+						terminalDesc.bSourceID = 2
+						# No controls
+						terminalDesc.bmControls = 0x00000000
+						terminalDesc.bCSourceID = 9
+						terminalDesc.wClusterDescrID = 0
+						terminalDesc.wExTerminalDescrID = 0
+						terminalDesc.wConnectorsDescrID = 4
+						terminalDesc.wTerminalDescrStr = 0
+
+					with FeatureUnitDescriptor(headerDesc, AudioChannels.STEREO) as unitDesc:
+						unitDesc.bUnitID = 2
+						unitDesc.bSourceID = 1
+
+					# This is actually a "High Capability" descriptor that's returned another way.
+					# with ConnectorsDescriptor(headerDesc) as connectorDesc:
+					# 	connectorDesc.wDescriptorID = 4
+					# 	connectorDesc.bNrConnectors = 1
+					# 	connectorDesc.bConnID = 1
+					# 	connectorDesc.waClusterDescrID = 2
+					# 	connectorDesc.baConType = ConnectorTypes.PHONE_CONNECTOR_3_5_MM
+					# 	connectorDesc.bmaConAttributes = ConnectorAttributes.FEMALE | ConnectorAttributes.INSERTION_DETECTION
+					# 	connectorDesc.daConColor = ConnectorColour(colour = 0x000000)
+
 			with configDesc.InterfaceDescriptor() as interfaceDesc:
 				interfaceDesc.bInterfaceNumber = 1
 				interfaceDesc.bAlternateSetting = 0
