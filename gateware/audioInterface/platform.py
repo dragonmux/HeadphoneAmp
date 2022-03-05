@@ -56,3 +56,10 @@ class AudioInterfacePlatform(LatticeICE40Platform):
 	]
 
 	connectors = []
+
+	def build(self, elaboratable, name = 'top', build_dir = 'build', do_build = True,
+		program_opts = None, do_program = False, **kwargs):
+		super().build(
+			elaboratable, name, build_dir, do_build, program_opts, do_program,
+			nextpnr_opts = ['--opt-timing', '--tmg-ripup', '--seed=3'], **kwargs
+		)
