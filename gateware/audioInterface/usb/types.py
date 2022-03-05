@@ -23,7 +23,6 @@ __all__ = (
 class HeaderDescriptorEmitter(ComplexDescriptorEmitter):
 	def __init__(self):
 		super().__init__(self.DESCRIPTOR_FORMAT)
-		self._parent = None
 		self._subordinates = []
 
 	@cached_property
@@ -42,8 +41,6 @@ class HeaderDescriptorEmitter(ComplexDescriptorEmitter):
 			subordinate = subordinate.emit()
 		else:
 			subordinate = bytes(subordinate)
-
-		self._parent.add_subordinate_descriptor(subordinate)
 
 	def _pre_emit(self):
 		subordinate_length = sum(len(sub) for sub in self._subordinates)
@@ -70,9 +67,13 @@ class HeaderDescriptor(DescriptorContextManager):
 	ParentDescriptor = InterfaceAssociationDescriptorEmitter
 	DescriptorEmitter = HeaderDescriptorEmitter
 
-	def __init__(self, parentDesc : InterfaceAssociationDescriptorEmitter):
-		super().__init__(parentDesc)
-		self._descriptor._parent = parentDesc
+	def __exit__(self, exc_type, exc_value, traceback):
+		# If an exception was raised, fast exit
+		if not (exc_type is None and exc_value is None and traceback is None):
+			return
+		self._parent.add_subordinate_descriptor(self._descriptor)
+		for sub in self._descriptor._subordinates:
+			self._parent.add_subordinate_descriptor(sub)
 
 class InputTerminalDescriptor(DescriptorContextManager):
 	ParentDescriptor = HeaderDescriptorEmitter
