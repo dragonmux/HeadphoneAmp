@@ -3,8 +3,8 @@ from luna.usb2 import USBDevice
 from usb_protocol.emitters.descriptors.standard import (
 	DeviceDescriptorCollection, LanguageIDs, DeviceClassCodes, MiscellaneousSubclassCodes, MultifunctionProtocolCodes
 )
-
 from usb_protocol.emitters.descriptors.uac3 import *
+
 from .types import *
 
 __all__ = (
@@ -91,6 +91,16 @@ class USBInterface(Elaboratable):
 					with FeatureUnitDescriptor(headerDesc, AudioChannels.STEREO) as unitDesc:
 						unitDesc.bUnitID = 2
 						unitDesc.bSourceID = 1
+
+					with ClockSourceDescriptor(headerDesc) as clockDesc:
+						clockDesc.bClockID = 9
+						# Async internal clock
+						clockDesc.bmAttributes = 0x01
+						# With only read-only frequency control (hah)
+						clockDesc.bmControls = 0x00000001
+						# Which is not derived in any manner
+						clockDesc.bReferenceTerminal = 0
+						clockDesc.wCSourceDescrStr = 0
 
 					# This is actually a "High Capability" descriptor that's returned another way.
 					# with ConnectorsDescriptor(headerDesc) as connectorDesc:

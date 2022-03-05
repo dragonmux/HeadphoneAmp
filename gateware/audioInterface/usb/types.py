@@ -4,16 +4,14 @@ from usb_protocol.emitters.descriptors.standard import InterfaceAssociationDescr
 from usb_protocol.emitters.descriptors.uac3 import (
 	InputTerminalDescriptorEmitter, OutputTerminalDescriptorEmitter
 )
-from .descriptors import (
-	AudioChannels, ConnectorAttributes, ConnectorColour,
-	MonoFeatureUnitDescriptor, StereoFeatureUnitDescriptor
-)
+from .descriptors import *
 
 __all__ = (
 	'HeaderDescriptor',
 	'InputTerminalDescriptor',
 	'OutputTerminalDescriptor',
 	'FeatureUnitDescriptor',
+	'ClockSourceDescriptor',
 	'ConnectorDescriptor',
 	'AudioChannels',
 	'ConnectorAttributes',
@@ -92,6 +90,14 @@ class FeatureUnitDescriptor(DescriptorContextManager):
 		else:
 			self.DescriptorEmitter = lambda: ConstructEmitter(StereoFeatureUnitDescriptor)
 		super().__init__(parentDesc)
+
+def ClockSourceDescriptorEmitter():
+	from .descriptors import ClockSourceDescriptor
+	return ConstructEmitter(ClockSourceDescriptor)
+
+class ClockSourceDescriptor(DescriptorContextManager):
+	ParentDescriptor = HeaderDescriptorEmitter
+	DescriptorEmitter = lambda self: ClockSourceDescriptorEmitter()
 
 def ConnectorDescriptorEmitter():
 	from .descriptors import ConnectorDescriptor

@@ -9,10 +9,9 @@ from usb_protocol.types.descriptors.uac3 import (
 __all__ = (
 	'AudioChannels',
 	'ConnectorAttributes',
-	'ConnectorColour'
+	'ConnectorColour',
 	'MonoFeatureUnitDescriptor',
-	'StereoFeatureUnitDescriptor',
-	'ConnectorDescriptor',
+	'StereoFeatureUnitDescriptor'
 )
 
 @unique
@@ -65,6 +64,17 @@ StereoFeatureUnitDescriptor = DescriptorFormat(
 	'wFeatureDescrStr'    / construct.Const(0, construct.Int16ul),
 )
 
+ClockSourceDescriptor = DescriptorFormat(
+	'bLength'             / construct.Const(12, construct.Int8ul),
+	'bDescriptorType'     / DescriptorNumber(AudioClassSpecificDescriptorTypes.CS_INTERFACE),
+	'bDescriptorSubtype'  / DescriptorNumber(AudioClassSpecificACInterfaceDescriptorSubtypes.CLOCK_SOURCE),
+	'bClockID'            / DescriptorField(description = 'unique identifier for the clock source within the audio function.'),
+	'bmAttributes'        / DescriptorField(description = 'D0: Internal Clock; D1: Endpoint Synchronous.'),
+	'bmControls'          / DescriptorField(description = 'D1..0: Clock Frequency Control; D3..2: Clock Validity Control; D31..4: Reserved.', length = 4),
+	'bReferenceTerminal'  / DescriptorField(description = 'ID of the terminal from which this clock source is derived. Zero if it is not derived'),
+	'wCSourceDescrStr'    / DescriptorField(description = 'ID of a class-specific string descriptor, describing the clock source.'),
+)
+
 ConnectorDescriptor = DescriptorFormat(
 	'wLength'             / construct.Const(18, construct.Int16ul),
 	'bDescriptorType'     / DescriptorNumber(AudioClassSpecificDescriptorTypes.CS_INTERFACE),
@@ -74,7 +84,7 @@ ConnectorDescriptor = DescriptorFormat(
 	'bConID'              / DescriptorField(description = 'unique identifier for the connector'),
 	'wClusterDescrID'     / DescriptorField(description = 'ID of the cluster descriptor for this connector'),
 	'bConType'            / DescriptorField(description = 'type of the connector'),
-	'bmConAttributes'     / DescriptorField(description = 'D1..0: connector gender; D2: insertion detection presense; D7..3: Reserved. physical attributes of the connector'),
+	'bmConAttributes'     / DescriptorField(description = 'D1..0: Connector Gender; D2: Insertion Detection Presense; D7..3: Reserved. physical attributes of the connector'),
 	'wConDescrStr'        / construct.Const(0, construct.Int16ul),
 	'dwConColor'          / DescriptorField(description = 'colour of the physical connector'),
 )
