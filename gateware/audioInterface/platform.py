@@ -36,7 +36,8 @@ class AudioInterfacePlatform(LatticeICE40Platform):
 			nxt = 'E2',
 			stp = 'D2',
 			rst = 'C1', rst_invert = True,
-			attrs = Attrs(IO_STANDARD = 'SB_LVCMOS')
+			attrs = Attrs(IO_STANDARD = 'SB_LVCMOS'),
+			clk_attrs = Attrs(GLOBAL = True)
 		),
 
 		Resource(
@@ -57,19 +58,9 @@ class AudioInterfacePlatform(LatticeICE40Platform):
 
 	connectors = []
 
-	def __init__(self, *, toolchain = 'IceStorm'):
-		for res in self.resources:
-			if res.name == 'ulpi':
-				for io in res.ios:
-					if io.name == 'clk':
-						io.clock = Clock(60e6)
-						io.attrs.update(Attrs(GLOBAL = True))
-
-		super().__init__(toolchain = toolchain)
-
 	def build(self, elaboratable, name = 'top', build_dir = 'build', do_build = True,
 		program_opts = None, do_program = False, **kwargs):
 		super().build(
 			elaboratable, name, build_dir, do_build, program_opts, do_program,
-			nextpnr_opts = ['--opt-timing', '--tmg-ripup', '--seed=1'], **kwargs
+			nextpnr_opts = ['--opt-timing', '--tmg-ripup', '--seed=0'], **kwargs
 		)
