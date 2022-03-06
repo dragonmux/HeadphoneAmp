@@ -15,6 +15,7 @@ __all__ = (
 	'OutputTerminalDescriptor',
 	'FeatureUnitDescriptor',
 	'ClockSourceDescriptor',
+	'PowerDomainDescriptor',
 	'ClassSpecificAudioStreamingInterfaceDescriptor',
 	'ConnectorDescriptor',
 	'AudioChannels',
@@ -102,6 +103,14 @@ def ClockSourceDescriptorEmitter():
 class ClockSourceDescriptor(DescriptorContextManager):
 	ParentDescriptor = HeaderDescriptorEmitter
 	DescriptorEmitter = lambda self: ClockSourceDescriptorEmitter()
+
+def PowerDomainDescriptorEmitter():
+	from .descriptors import PowerDomainDescriptor
+	return ConstructEmitter(PowerDomainDescriptor)
+
+class PowerDomainDescriptor(DescriptorContextManager):
+	ParentDescriptor = HeaderDescriptorEmitter
+	DescriptorEmitter = lambda self: PowerDomainDescriptorEmitter()
 
 class ClassSpecificAudioStreamingInterfaceDescriptor(DescriptorContextManager):
 	ParentDescriptor = InterfaceDescriptorEmitter

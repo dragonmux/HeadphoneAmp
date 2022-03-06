@@ -69,7 +69,7 @@ class USBInterface(Elaboratable):
 						terminalDesc.bCSourceID = 9
 						# No controls
 						terminalDesc.bmControls = 0x00000000
-						terminalDesc.wClusterDescrID = 0
+						terminalDesc.wClusterDescrID = 2
 						terminalDesc.wExTerminalDescrID = 0
 						terminalDesc.wConnectorsDescrID = 0
 						terminalDesc.wTerminalDescrStr = 0
@@ -83,7 +83,7 @@ class USBInterface(Elaboratable):
 						terminalDesc.bmControls = 0x00000000
 						terminalDesc.bCSourceID = 9
 						terminalDesc.wExTerminalDescrID = 0
-						terminalDesc.wConnectorsDescrID = 4
+						terminalDesc.wConnectorsDescrID = 0
 						terminalDesc.wTerminalDescrStr = 0
 
 					with FeatureUnitDescriptor(headerDesc, AudioChannels.STEREO) as unitDesc:
@@ -99,6 +99,14 @@ class USBInterface(Elaboratable):
 						# Which is not derived in any manner
 						clockDesc.bReferenceTerminal = 0
 						clockDesc.wCSourceDescrStr = 0
+
+					with PowerDomainDescriptor(headerDesc) as pdDesc:
+						pdDesc.bPowerDomainID = 11
+						# 30ms and 300ms expressed in 50µs increments
+						pdDesc.waRecoveryTime = [600, 6000]
+						pdDesc.bNrEntities = 2
+						pdDesc.baEntityID = [4, 6]
+						pdDesc.wPDomainDescrStr = 0
 
 					# This is actually a "High Capability" descriptor that's returned another way.
 					# with ConnectorsDescriptor(headerDesc) as connectorDesc:
@@ -141,7 +149,7 @@ class USBInterface(Elaboratable):
 					ep1Out.bEndpointAddress = 0x01
 					# Isochronous asynchronous data endpoint
 					ep1Out.bmAttributes = 0x05
-					ep1Out.wMaxPacketSize = 64
+					ep1Out.wMaxPacketSize = 196
 					ep1Out.bInterval = 4 # Spec requires we support a 1ms interval here.
 
 		descriptors.add_language_descriptor((LanguageIDs.ENGLISH_US, ))

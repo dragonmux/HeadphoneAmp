@@ -1,5 +1,6 @@
 from enum import IntEnum, auto, unique
 import construct
+from construct import this, len_
 
 from usb_protocol.types.descriptor import DescriptorField, DescriptorNumber, DescriptorFormat
 from usb_protocol.types.descriptors.uac3 import (
@@ -73,6 +74,17 @@ ClockSourceDescriptor = DescriptorFormat(
 	'bmControls'          / DescriptorField(description = 'D1..0: Clock Frequency Control; D3..2: Clock Validity Control; D31..4: Reserved.', length = 4),
 	'bReferenceTerminal'  / DescriptorField(description = 'ID of the terminal from which this clock source is derived. Zero if it is not derived'),
 	'wCSourceDescrStr'    / DescriptorField(description = 'ID of a class-specific string descriptor, describing the clock source.'),
+)
+
+PowerDomainDescriptor = DescriptorFormat(
+	'bLength'             / construct.Rebuild(construct.Int8ul, len_(this.baEntityID) + 11),
+	'bDescriptorType'     / DescriptorNumber(AudioClassSpecificDescriptorTypes.CS_INTERFACE),
+	'bDescriptorSubtype'  / DescriptorNumber(AudioClassSpecificACInterfaceDescriptorSubtypes.POWER_DOMAIN),
+	'bPowerDomainID'      / DescriptorField(description = 'unique identifier for the power domain within the audio function.'),
+	'waRecoveryTime'      / construct.Int16ul[2],
+	'bNrEntities'         / construct.Rebuild(construct.Int8ul, len_(this.baEntityID)),
+	'baEntityID'          / construct.Int8ul[this.bNrEntities],
+	'wPDomainDescrStr'    / DescriptorField(description = 'ID of a class-specific string descriptor, describing the power domain.'),
 )
 
 ConnectorDescriptor = DescriptorFormat(
