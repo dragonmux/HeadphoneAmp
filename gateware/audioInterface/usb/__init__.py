@@ -1,11 +1,13 @@
 from amaranth import Elaboratable, Module
 from luna.usb2 import USBDevice
+from usb_protocol.types import USBTransferType, USBSynchronizationType, USBUsageType
 from usb_protocol.emitters.descriptors.standard import (
 	DeviceDescriptorCollection, LanguageIDs, DeviceClassCodes, MiscellaneousSubclassCodes, MultifunctionProtocolCodes
 )
 from usb_protocol.emitters.descriptors.uac3 import *
 
 from .types import *
+from .control import *
 
 __all__ = (
 	'USBInterface',
@@ -153,7 +155,18 @@ class USBInterface(Elaboratable):
 					ep1Out.bInterval = 4 # Spec requires we support a 1ms interval here.
 
 		descriptors.add_language_descriptor((LanguageIDs.ENGLISH_US, ))
-		device.add_standard_control_endpoint(descriptors)
+		ep0 = device.add_standard_control_endpoint(descriptors)
+
+		audioRequestHandler = AudioRequestHandler()
+
+		def stallCondition(setup : SetupPacket):
+			return ~(
+				(setup.type == USBRequestType.STANDARD) |
+				audioRequestHandler.handlerCondition(setup)
+			)
+
+		ep0.add_request_handler(audioRequestHandler)
+		ep0.add_request_handler(StallOnlyRequestHandler(stall_condition = stallCondition))
 
 		# Signal that we always want LUNA to try connecting
 		m.d.comb += [
