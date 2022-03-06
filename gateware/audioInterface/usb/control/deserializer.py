@@ -57,7 +57,7 @@ class StreamDeserializer(Elaboratable):
 		positionInData = Signal(range(self.dataLength))
 		# Track whether we've more work to do to complete the read
 		shouldContinue = (
-			(positionInData < (self.dataLength - 1)) |
+			(positionInData < (self.dataLength - 1)) &
 			(positionInData < (self.maxLength - 1))
 		)
 

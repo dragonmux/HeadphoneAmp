@@ -1,8 +1,6 @@
 from amaranth import Module, Signal, Cat
-from usb_protocol.types import USBRequestType
-from usb_protocol.types.descriptors.uac3 import (
-	AudioInterfaceClassCode, AudioClassSpecificRequestCodes, AudioControlInterfaceControlSelectors
-)
+from usb_protocol.types import USBRequestType, USBRequestRecipient
+from usb_protocol.types.descriptors.uac3 import AudioClassSpecificRequestCodes, AudioControlInterfaceControlSelectors
 from luna.gateware.usb.usb2.request import (
 	USBRequestHandler, SetupPacket, StallOnlyRequestHandler, USBInStreamInterface, USBOutStreamInterface
 )
@@ -118,7 +116,7 @@ class AudioRequestHandler(USBRequestHandler):
 	def handlerCondition(self, setup : SetupPacket):
 		return (
 			(setup.type == USBRequestType.CLASS) &
-			(setup.recipient == AudioInterfaceClassCode.AUDIO)
+			(setup.recipient == USBRequestRecipient.INTERFACE)
 		)
 
 	def lengthForCurrent(self, m : Module, setup : SetupPacket):
