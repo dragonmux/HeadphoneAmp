@@ -5,6 +5,8 @@ from luna.gateware.usb.usb2.request import (
 	USBRequestHandler, SetupPacket, StallOnlyRequestHandler, USBInStreamInterface, USBOutStreamInterface
 )
 from luna.gateware.stream.generator import StreamSerializer
+from typing import Iterable
+
 from .deserializer import StreamDeserializer
 
 __all__ = (
@@ -15,10 +17,12 @@ __all__ = (
 )
 
 class AudioRequestHandler(USBRequestHandler):
-	def __init__(self):
+	def __init__(self, *, interfaces : Iterable[int]):
 		super().__init__()
 		# Used to support getting/setting the power state of the device.
 		self.powerState = Signal(8)
+		self.interfaces = interfaces
+		self.altModes = {interface: Signal(8, name = f'altMode{interface}') for interface in self.interfaces}
 
 	def elaborate(self, platform):
 		m = Module()
@@ -38,14 +42,63 @@ class AudioRequestHandler(USBRequestHandler):
 				with m.State('IDLE'):
 					# If we've received a new setup packet
 					with m.If(setup.received):
-						# Switch to the right state for what we need to handle
-						with m.Switch(setup.request):
-							with m.Case(AudioClassSpecificRequestCodes.CUR):
-								m.next = 'HANDLE_CURRENT'
-							with m.Default():
-								m.next = 'UNHANDLED'
+						with m.If(setup.type == USBRequestType.CLASS):
+							# Switch to the right state for what we need to handle
+							with m.Switch(setup.request):
+								with m.Case(AudioClassSpecificRequestCodes.CUR):
+									m.next = 'HANDLE_CURRENT'
+								with m.Default():
+									m.next = 'UNHANDLED'
+						with m.Elif(setup.type == USBRequestType.STANDARD):
+							# Switch to the right state for what we need to handle
+							with m.Switch(setup.request):
+								with m.Case(USBStandardRequests.GET_INTERFACE):
+									m.next = 'GET_INTERFACE'
+								with m.Case(USBStandardRequests.SET_INTERFACE):
+									m.next = 'SET_INTERFACE'
+								with m.Default():
+									m.next = 'UNHANDLED'
+						with m.Else():
+							m.next = 'UNHANDLED'
 					# Make sure that we reset the rx trigger state
 					m.d.usb += rxTriggered.eq(0)
+
+				# GET_INTERFACE -- The host is trying to ask what one of our interfaces' alt-mode is set to
+				with m.State('GET_INTERFACE'):
+					# Hook up the transmitter ...
+					m.d.comb += [
+						layout1Transmitter.stream.connect(interface.tx),
+						layout1Transmitter.max_length.eq(1),
+					]
+					for idx, altMode in self.altModes.items():
+						with m.If(idx == setup.index[0:8]):
+							m.d.comb += layout1Transmitter.data[0].eq(altMode)
+
+					# ... then trigger it when requested if the lengths match ...
+					with m.If(self.interface.data_requested):
+						with m.If(setup.length == 1):
+							m.d.comb += layout1Transmitter.start.eq(1)
+						with m.Else():
+							m.d.comb += interface.handshakes_out.stall.eq(1)
+							m.next = 'IDLE'
+
+					# ... and ACK our status stage.
+					with m.If(interface.status_requested):
+						m.d.comb += interface.handshakes_out.ack.eq(1)
+						m.next = 'IDLE'
+
+				# SET_INTERFACE -- The host is trying to switch to one of our interface alt-modes
+				with m.State('SET_INTERFACE'):
+					# Provide a response to the status stage
+					with m.If(interface.status_requested):
+						m.d.comb += self.send_zlp()
+					# Copy the value once we get back an ACK from the ZLP
+					with m.If(interface.handshakes_in.ack):
+						for idx, altMode in self.altModes.items():
+							with m.If(idx == setup.index[0:8]):
+								m.d.usb += altMode.eq(setup.value[0:8])
+						m.next = 'IDLE'
+
 				# HANDLE_CURRENT -- handle a 'CUR' request
 				with m.State('HANDLE_CURRENT'):
 					# If this is a GET request

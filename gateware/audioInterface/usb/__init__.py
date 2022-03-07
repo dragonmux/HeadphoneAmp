@@ -157,7 +157,7 @@ class USBInterface(Elaboratable):
 		descriptors.add_language_descriptor((LanguageIDs.ENGLISH_US, ))
 		ep0 = device.add_standard_control_endpoint(descriptors)
 
-		audioRequestHandler = AudioRequestHandler()
+		audioRequestHandler = AudioRequestHandler(interfaces = (0, 1))
 
 		def stallCondition(setup : SetupPacket):
 			return ~(
