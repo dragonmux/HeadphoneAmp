@@ -1,9 +1,11 @@
 from arachne.core.sim import sim_case
 from amaranth.sim import Simulator, Settle
+from luna.gateware.usb.request import SetupPacket
 from usb_protocol.types import USBRequestType, USBRequestRecipient, USBStandardRequests
 from usb_protocol.types.descriptors.uac3 import (
 	AudioClassSpecificRequestCodes, AudioControlInterfaceControlSelectors, FeatureUnitControlSelectors
 )
+from typing import Tuple
 
 from ....usb.control.request import AudioRequestHandler
 
@@ -25,53 +27,44 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield
 		yield
 
-	def sendSetupSetInterface(setup):
+	def sendSetup(setup : SetupPacket, *, type : USBRequestType, retrieve : bool, request,
+		value : Tuple[int, int], index : Tuple[int, int], length : int):
 		yield setup.recipient.eq(USBRequestRecipient.INTERFACE)
-		yield setup.type.eq(USBRequestType.STANDARD)
-		yield setup.is_in_request.eq(0)
-		yield setup.request.eq(USBStandardRequests.SET_INTERFACE)
-		yield setup.value[0:8].eq(1) # Interface 1
-		yield setup.value[8:16].eq(0)
-		yield setup.index[0:8].eq(1)
-		yield setup.index[8:16].eq(0)
-		yield setup.length.eq(0)
+		yield setup.type.eq(type)
+		yield setup.is_in_request.eq(1 if retrieve else 0)
+		yield setup.request.eq(request)
+		yield setup.value[0:8].eq(value[0]) # This specifies the interface
+		yield setup.value[8:16].eq(value[1])
+		yield setup.index[0:8].eq(index[0])
+		yield setup.index[8:16].eq(index[1])
+		yield setup.length.eq(length)
 		yield from setupReceived()
 
-	def sendSetupPowerState(setup, *, retrieve : bool):
-		yield setup.recipient.eq(USBRequestRecipient.INTERFACE)
-		yield setup.type.eq(USBRequestType.CLASS)
-		yield setup.is_in_request.eq(1 if retrieve else 0)
-		yield setup.request.eq(AudioClassSpecificRequestCodes.CUR)
-		yield setup.value[0:8].eq(0) # Interface 0
-		yield setup.value[8:16].eq(AudioControlInterfaceControlSelectors.AC_POWER_DOMAIN_CONTROL)
-		yield setup.index[0:8].eq(0)
-		yield setup.index[8:16].eq(10) # Power Domain ID
-		yield setup.length.eq(1)
-		yield from setupReceived()
+	def sendSetupSetInterface(setup : SetupPacket):
+		# setup packet for interface 1
+		yield from sendSetup(setup, type = USBRequestType.STANDARD, retrieve = False,
+			request = USBStandardRequests.SET_INTERFACE, value = (1, 0), index = (1, 0), length = 0)
 
-	def sendSetupMuteState(setup, *, retrieve : bool):
-		yield setup.recipient.eq(USBRequestRecipient.INTERFACE)
-		yield setup.type.eq(USBRequestType.CLASS)
-		yield setup.is_in_request.eq(1 if retrieve else 0)
-		yield setup.request.eq(AudioClassSpecificRequestCodes.CUR)
-		yield setup.value[0:8].eq(0) # Interface 0
-		yield setup.value[8:16].eq(FeatureUnitControlSelectors.FU_MUTE_CONTROL)
-		yield setup.index[0:8].eq(0)
-		yield setup.index[8:16].eq(2) # Input Terminal ID
-		yield setup.length.eq(1)
-		yield from setupReceived()
+	def sendSetupPowerState(setup : SetupPacket, *, retrieve : bool):
+		# setup packet for interface 0 to the power domain control
+		yield from sendSetup(setup, type = USBRequestType.CLASS, retrieve = retrieve,
+			request = AudioClassSpecificRequestCodes.CUR,
+			value = (0, AudioControlInterfaceControlSelectors.AC_POWER_DOMAIN_CONTROL),
+			index = (0, 10), length = 1)
 
-	def sendSetupVolumeState(setup, *, retrieve : bool):
-		yield setup.recipient.eq(USBRequestRecipient.INTERFACE)
-		yield setup.type.eq(USBRequestType.CLASS)
-		yield setup.is_in_request.eq(1 if retrieve else 0)
-		yield setup.request.eq(AudioClassSpecificRequestCodes.CUR)
-		yield setup.value[0:8].eq(0) # Interface 0
-		yield setup.value[8:16].eq(FeatureUnitControlSelectors.FU_VOLUME_CONTROL)
-		yield setup.index[0:8].eq(0)
-		yield setup.index[8:16].eq(2) # Input Terminal ID
-		yield setup.length.eq(2)
-		yield from setupReceived()
+	def sendSetupMuteState(setup : SetupPacket, *, retrieve : bool):
+		# setup packet for interface 0 to the feature unit
+		yield from sendSetup(setup, type = USBRequestType.CLASS, retrieve = retrieve,
+			request = AudioClassSpecificRequestCodes.CUR,
+			value = (0, FeatureUnitControlSelectors.FU_MUTE_CONTROL),
+			index = (0, 2), length = 1)
+
+	def sendSetupVolumeState(setup : SetupPacket, *, retrieve : bool):
+		# setup packet for interface 0 to the feature unit
+		yield from sendSetup(setup, type = USBRequestType.CLASS, retrieve = retrieve,
+			request = AudioClassSpecificRequestCodes.CUR,
+			value = (0, FeatureUnitControlSelectors.FU_VOLUME_CONTROL),
+			index = (0, 2), length = 2)
 
 	def domainUSB():
 		yield
