@@ -143,11 +143,15 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		assert (yield dut.altModes[1]) == 1
 		yield from sendSetupMuteState(retrieve = True)
 		yield from receiveData(data = (0, ))
-		yield from sendSetupVolumeState(retrieve = True)
-		yield from receiveData(data = (0, 0))
 		yield from sendSetupPowerState(retrieve = False)
+		yield from sendData(data = (1, ))
+		yield from sendSetupMuteState(retrieve = False)
 		yield from sendData(data = (1, ))
 		yield from sendSetupPowerState(retrieve = True)
 		yield from receiveData(data = (1, ))
+		yield from sendSetupMuteState(retrieve = True)
+		yield from receiveData(data = (1, ))
+		yield from sendSetupVolumeState(retrieve = True)
+		yield from receiveData(data = (0, 0))
 		yield
 	yield domainUSB, 'usb'
