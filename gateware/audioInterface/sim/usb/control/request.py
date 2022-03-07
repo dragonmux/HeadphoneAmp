@@ -12,6 +12,7 @@ from ....usb.control.request import AudioRequestHandler
 )
 def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 	interface = dut.interface
+	tx = interface.tx
 	rx = interface.rx
 
 	def setupReceived():
@@ -20,6 +21,7 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield
 		yield interface.setup.received.eq(0)
 		yield Settle()
+		yield
 		yield
 
 	def sendSetupSetInterface(setup):
@@ -34,10 +36,10 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield setup.length.eq(0)
 		yield from setupReceived()
 
-	def sendSetupCurrent(setup):
+	def sendSetupPowerState(setup, *, retrieve : bool):
 		yield setup.recipient.eq(USBRequestRecipient.INTERFACE)
 		yield setup.type.eq(USBRequestType.CLASS)
-		yield setup.is_in_request.eq(0)
+		yield setup.is_in_request.eq(1 if retrieve else 0)
 		yield setup.request.eq(AudioClassSpecificRequestCodes.CUR)
 		yield setup.value[0:8].eq(0)
 		yield setup.value[8:16].eq(AudioControlInterfaceControlSelectors.AC_POWER_DOMAIN_CONTROL)
@@ -49,20 +51,25 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 	def domainUSB():
 		yield
 		yield from sendSetupSetInterface(interface.setup)
-		yield
-		yield
+		assert (yield tx.valid) == 0
+		assert (yield tx.last) == 0
 		yield interface.status_requested.eq(1)
 		yield Settle()
 		yield
+		assert (yield tx.valid) == 1
+		assert (yield tx.last) == 1
 		yield interface.status_requested.eq(0)
 		yield interface.handshakes_in.ack.eq(1)
 		yield Settle()
 		yield
+		assert (yield dut.altModes[1]) == 0
+		assert (yield tx.valid) == 0
+		assert (yield tx.last) == 0
 		yield interface.handshakes_in.ack.eq(0)
 		yield Settle()
 		yield
-		yield from sendSetupCurrent(interface.setup)
-		yield
+		assert (yield dut.altModes[1]) == 1
+		yield from sendSetupPowerState(interface.setup, retrieve = False)
 		yield rx.valid.eq(1)
 		yield Settle()
 		yield
@@ -71,9 +78,11 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield Settle()
 		yield
 		yield rx.next.eq(0)
+		yield rx.valid.eq(0)
+		yield interface.rx_ready_for_response.eq(1)
 		yield Settle()
 		yield
-		yield rx.valid.eq(0)
+		yield interface.rx_ready_for_response.eq(0)
 		yield interface.status_requested.eq(1)
 		yield Settle()
 		yield
@@ -83,5 +92,30 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield
 		yield interface.handshakes_in.ack.eq(0)
 		yield Settle()
+		yield
+		yield from sendSetupPowerState(interface.setup, retrieve = True)
+		yield tx.ready.eq(1)
+		yield interface.data_requested.eq(1)
+		yield Settle()
+		yield
+		assert (yield tx.valid) == 0
+		assert (yield tx.payload) == 0
+		yield interface.data_requested.eq(0)
+		yield Settle()
+		yield
+		assert (yield tx.valid) == 1
+		assert (yield tx.payload) == 1
+		assert (yield interface.handshakes_out.ack) == 0
+		yield tx.ready.eq(0)
+		yield interface.status_requested.eq(1)
+		yield Settle()
+		yield
+		assert (yield tx.valid) == 0
+		assert (yield tx.payload) == 0
+		assert (yield interface.handshakes_out.ack) == 1
+		yield interface.status_requested.eq(0)
+		yield Settle()
+		yield
+		assert (yield interface.handshakes_out.ack) == 0
 		yield
 	yield domainUSB, 'usb'
