@@ -67,6 +67,13 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 			value = (0, FeatureUnitControlSelectors.FU_VOLUME_CONTROL),
 			index = (0, 2), length = 2)
 
+	def sendSetupVolumeRange():
+		# setup packet for interface 0 to the feature unit
+		yield from sendSetup(type = USBRequestType.CLASS, retrieve = True,
+			request = AudioClassSpecificRequestCodes.RANGE,
+			value = (0, FeatureUnitControlSelectors.FU_VOLUME_CONTROL),
+			index = (0, 2), length = 8)
+
 	def receiveData(*, data : Tuple):
 		yield tx.ready.eq(1)
 		yield interface.data_requested.eq(1)
@@ -145,6 +152,8 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield from receiveData(data = (0, ))
 		yield from sendSetupPowerState(retrieve = False)
 		yield from sendData(data = (1, ))
+		yield from sendSetupVolumeRange()
+		yield from receiveData(data = (1, 0, 0x88, 0xFF, 0, 0, 1, 0))
 		yield from sendSetupMuteState(retrieve = False)
 		yield from sendData(data = (1, ))
 		yield from sendSetupPowerState(retrieve = True)
