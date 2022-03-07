@@ -15,19 +15,20 @@ from ....usb.control.request import AudioRequestHandler
 )
 def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 	interface = dut.interface
+	setup = interface.setup
 	tx = interface.tx
 	rx = interface.rx
 
 	def setupReceived():
-		yield interface.setup.received.eq(1)
+		yield setup.received.eq(1)
 		yield Settle()
 		yield
-		yield interface.setup.received.eq(0)
+		yield setup.received.eq(0)
 		yield Settle()
 		yield
 		yield
 
-	def sendSetup(setup : SetupPacket, *, type : USBRequestType, retrieve : bool, request,
+	def sendSetup(*, type : USBRequestType, retrieve : bool, request,
 		value : Tuple[int, int], index : Tuple[int, int], length : int):
 		yield setup.recipient.eq(USBRequestRecipient.INTERFACE)
 		yield setup.type.eq(type)
@@ -40,35 +41,88 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield setup.length.eq(length)
 		yield from setupReceived()
 
-	def sendSetupSetInterface(setup : SetupPacket):
+	def sendSetupSetInterface():
 		# setup packet for interface 1
-		yield from sendSetup(setup, type = USBRequestType.STANDARD, retrieve = False,
+		yield from sendSetup(type = USBRequestType.STANDARD, retrieve = False,
 			request = USBStandardRequests.SET_INTERFACE, value = (1, 0), index = (1, 0), length = 0)
 
-	def sendSetupPowerState(setup : SetupPacket, *, retrieve : bool):
+	def sendSetupPowerState(*, retrieve : bool):
 		# setup packet for interface 0 to the power domain control
-		yield from sendSetup(setup, type = USBRequestType.CLASS, retrieve = retrieve,
+		yield from sendSetup(type = USBRequestType.CLASS, retrieve = retrieve,
 			request = AudioClassSpecificRequestCodes.CUR,
 			value = (0, AudioControlInterfaceControlSelectors.AC_POWER_DOMAIN_CONTROL),
 			index = (0, 10), length = 1)
 
-	def sendSetupMuteState(setup : SetupPacket, *, retrieve : bool):
+	def sendSetupMuteState(*, retrieve : bool):
 		# setup packet for interface 0 to the feature unit
-		yield from sendSetup(setup, type = USBRequestType.CLASS, retrieve = retrieve,
+		yield from sendSetup(type = USBRequestType.CLASS, retrieve = retrieve,
 			request = AudioClassSpecificRequestCodes.CUR,
 			value = (0, FeatureUnitControlSelectors.FU_MUTE_CONTROL),
 			index = (0, 2), length = 1)
 
-	def sendSetupVolumeState(setup : SetupPacket, *, retrieve : bool):
+	def sendSetupVolumeState(*, retrieve : bool):
 		# setup packet for interface 0 to the feature unit
-		yield from sendSetup(setup, type = USBRequestType.CLASS, retrieve = retrieve,
+		yield from sendSetup(type = USBRequestType.CLASS, retrieve = retrieve,
 			request = AudioClassSpecificRequestCodes.CUR,
 			value = (0, FeatureUnitControlSelectors.FU_VOLUME_CONTROL),
 			index = (0, 2), length = 2)
 
+	def receiveData(*, data : Tuple):
+		yield tx.ready.eq(1)
+		yield interface.data_requested.eq(1)
+		yield Settle()
+		yield
+		assert (yield tx.valid) == 0
+		assert (yield tx.payload) == 0
+		yield interface.data_requested.eq(0)
+		yield Settle()
+		yield
+		for idx, value in enumerate(data):
+			assert (yield tx.valid) == 1
+			assert (yield tx.payload) == value
+			assert (yield interface.handshakes_out.ack) == 0
+			if idx == len(data) - 1:
+				yield tx.ready.eq(0)
+				yield interface.status_requested.eq(1)
+			yield Settle()
+			yield
+		assert (yield tx.valid) == 0
+		assert (yield tx.payload) == 0
+		assert (yield interface.handshakes_out.ack) == 1
+		yield interface.status_requested.eq(0)
+		yield Settle()
+		yield
+		assert (yield interface.handshakes_out.ack) == 0
+
+	def sendData(*, data : Tuple):
+		yield rx.valid.eq(1)
+		for value in data:
+			yield Settle()
+			yield
+			yield rx.payload.eq(value)
+			yield rx.next.eq(1)
+			yield Settle()
+			yield
+			yield rx.next.eq(0)
+		yield rx.valid.eq(0)
+		yield interface.rx_ready_for_response.eq(1)
+		yield Settle()
+		yield
+		yield interface.rx_ready_for_response.eq(0)
+		yield interface.status_requested.eq(1)
+		yield Settle()
+		yield
+		yield interface.status_requested.eq(0)
+		yield interface.handshakes_in.ack.eq(1)
+		yield Settle()
+		yield
+		yield interface.handshakes_in.ack.eq(0)
+		yield Settle()
+		yield
+
 	def domainUSB():
 		yield
-		yield from sendSetupSetInterface(interface.setup)
+		yield from sendSetupSetInterface()
 		assert (yield tx.valid) == 0
 		assert (yield tx.last) == 0
 		yield interface.status_requested.eq(1)
@@ -87,105 +141,13 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield Settle()
 		yield
 		assert (yield dut.altModes[1]) == 1
-		yield from sendSetupMuteState(interface.setup, retrieve = True)
-		yield tx.ready.eq(1)
-		yield interface.data_requested.eq(1)
-		yield Settle()
-		yield
-		assert (yield tx.valid) == 0
-		assert (yield tx.payload) == 0
-		yield interface.data_requested.eq(0)
-		yield Settle()
-		yield
-		assert (yield tx.valid) == 1
-		assert (yield tx.payload) == 0
-		assert (yield interface.handshakes_out.ack) == 0
-		yield tx.ready.eq(0)
-		yield interface.status_requested.eq(1)
-		yield Settle()
-		yield
-		assert (yield tx.valid) == 0
-		assert (yield tx.payload) == 0
-		assert (yield interface.handshakes_out.ack) == 1
-		yield interface.status_requested.eq(0)
-		yield Settle()
-		yield
-		assert (yield interface.handshakes_out.ack) == 0
-		yield from sendSetupVolumeState(interface.setup, retrieve = True)
-		yield tx.ready.eq(1)
-		yield interface.data_requested.eq(1)
-		yield Settle()
-		yield
-		assert (yield tx.valid) == 0
-		assert (yield tx.payload) == 0
-		yield interface.data_requested.eq(0)
-		yield Settle()
-		yield
-		assert (yield tx.valid) == 1
-		assert (yield tx.payload) == 0
-		yield Settle()
-		yield
-		assert (yield tx.valid) == 1
-		assert (yield tx.payload) == 0
-		assert (yield interface.handshakes_out.ack) == 0
-		yield tx.ready.eq(0)
-		yield interface.status_requested.eq(1)
-		yield Settle()
-		yield
-		assert (yield tx.valid) == 0
-		assert (yield tx.payload) == 0
-		assert (yield interface.handshakes_out.ack) == 1
-		yield interface.status_requested.eq(0)
-		yield Settle()
-		yield
-		assert (yield interface.handshakes_out.ack) == 0
-		yield from sendSetupPowerState(interface.setup, retrieve = False)
-		yield rx.valid.eq(1)
-		yield Settle()
-		yield
-		yield rx.payload.eq(1)
-		yield rx.next.eq(1)
-		yield Settle()
-		yield
-		yield rx.next.eq(0)
-		yield rx.valid.eq(0)
-		yield interface.rx_ready_for_response.eq(1)
-		yield Settle()
-		yield
-		yield interface.rx_ready_for_response.eq(0)
-		yield interface.status_requested.eq(1)
-		yield Settle()
-		yield
-		yield interface.status_requested.eq(0)
-		yield interface.handshakes_in.ack.eq(1)
-		yield Settle()
-		yield
-		yield interface.handshakes_in.ack.eq(0)
-		yield Settle()
-		yield
-		yield from sendSetupPowerState(interface.setup, retrieve = True)
-		yield tx.ready.eq(1)
-		yield interface.data_requested.eq(1)
-		yield Settle()
-		yield
-		assert (yield tx.valid) == 0
-		assert (yield tx.payload) == 0
-		yield interface.data_requested.eq(0)
-		yield Settle()
-		yield
-		assert (yield tx.valid) == 1
-		assert (yield tx.payload) == 1
-		assert (yield interface.handshakes_out.ack) == 0
-		yield tx.ready.eq(0)
-		yield interface.status_requested.eq(1)
-		yield Settle()
-		yield
-		assert (yield tx.valid) == 0
-		assert (yield tx.payload) == 0
-		assert (yield interface.handshakes_out.ack) == 1
-		yield interface.status_requested.eq(0)
-		yield Settle()
-		yield
-		assert (yield interface.handshakes_out.ack) == 0
+		yield from sendSetupMuteState(retrieve = True)
+		yield from receiveData(data = (0, ))
+		yield from sendSetupVolumeState(retrieve = True)
+		yield from receiveData(data = (0, 0))
+		yield from sendSetupPowerState(retrieve = False)
+		yield from sendData(data = (1, ))
+		yield from sendSetupPowerState(retrieve = True)
+		yield from receiveData(data = (1, ))
 		yield
 	yield domainUSB, 'usb'
