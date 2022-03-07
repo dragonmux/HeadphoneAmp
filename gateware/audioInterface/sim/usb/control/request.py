@@ -29,7 +29,7 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield setup.type.eq(USBRequestType.STANDARD)
 		yield setup.is_in_request.eq(0)
 		yield setup.request.eq(USBStandardRequests.SET_INTERFACE)
-		yield setup.value[0:8].eq(1)
+		yield setup.value[0:8].eq(1) # Interface 1
 		yield setup.value[8:16].eq(0)
 		yield setup.index[0:8].eq(1)
 		yield setup.index[8:16].eq(0)
@@ -41,10 +41,10 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield setup.type.eq(USBRequestType.CLASS)
 		yield setup.is_in_request.eq(1 if retrieve else 0)
 		yield setup.request.eq(AudioClassSpecificRequestCodes.CUR)
-		yield setup.value[0:8].eq(0)
+		yield setup.value[0:8].eq(0) # Interface 0
 		yield setup.value[8:16].eq(AudioControlInterfaceControlSelectors.AC_POWER_DOMAIN_CONTROL)
 		yield setup.index[0:8].eq(0)
-		yield setup.index[8:16].eq(11)
+		yield setup.index[8:16].eq(10) # Power Domain ID
 		yield setup.length.eq(1)
 		yield from setupReceived()
 

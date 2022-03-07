@@ -178,7 +178,7 @@ class AudioRequestHandler(USBRequestHandler):
 		m.d.comb += length.eq(0)
 
 		# If the request is for the power domain, return the length of the power state setting
-		with m.If((setup.index[0:8] == 0) & (setup.index[8:16] == 11) & (setup.value[0:8] == 0) &
+		with m.If((setup.index[0:8] == 0) & (setup.index[8:16] == 10) & (setup.value[0:8] == 0) &
 			(setup.value[8:16] == AudioControlInterfaceControlSelectors.AC_POWER_DOMAIN_CONTROL)):
 			m.d.comb += length.eq(1)
 
@@ -189,7 +189,7 @@ class AudioRequestHandler(USBRequestHandler):
 		m.d.comb += setting.eq(0)
 
 		# If the request is for the power domain, return the power state setting
-		with m.If((setup.index[0:8] == 0) & (setup.index[8:16] == 11) & (setup.value[0:8] == 0) &
+		with m.If((setup.index[0:8] == 0) & (setup.index[8:16] == 10) & (setup.value[0:8] == 0) &
 			(setup.value[8:16] == AudioControlInterfaceControlSelectors.AC_POWER_DOMAIN_CONTROL)):
 			m.d.comb += setting.eq(self.powerState)
 
@@ -197,6 +197,6 @@ class AudioRequestHandler(USBRequestHandler):
 
 	def settingFromCurrent(self, m : Module, setup : SetupPacket, setting : Signal):
 		# If the request is for the power domain, return the power state setting
-		with m.If((setup.index[0:8] == 0) & (setup.index[8:16] == 11) & (setup.value[0:8] == 0) &
+		with m.If((setup.index[0:8] == 0) & (setup.index[8:16] == 10) & (setup.value[0:8] == 0) &
 			(setup.value[8:16] == AudioControlInterfaceControlSelectors.AC_POWER_DOMAIN_CONTROL)):
 			m.d.usb += self.powerState.eq(setting)

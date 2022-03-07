@@ -103,11 +103,11 @@ class USBInterface(Elaboratable):
 						clockDesc.wCSourceDescrStr = 0
 
 					with PowerDomainDescriptor(headerDesc) as pdDesc:
-						pdDesc.bPowerDomainID = 11
+						pdDesc.bPowerDomainID = 10
 						# 30ms and 300ms expressed in 50µs increments
 						pdDesc.waRecoveryTime = [600, 6000]
 						pdDesc.bNrEntities = 2
-						pdDesc.baEntityID = [4, 6]
+						pdDesc.baEntityID = [1, 3]
 						pdDesc.wPDomainDescrStr = 0
 
 					# This is actually a "High Capability" descriptor that's returned another way.
