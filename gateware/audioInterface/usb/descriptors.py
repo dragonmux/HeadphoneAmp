@@ -100,3 +100,14 @@ ConnectorDescriptor = DescriptorFormat(
 	'wConDescrStr'        / construct.Const(0, construct.Int16ul),
 	'dwConColor'          / DescriptorField(description = 'colour of the physical connector'),
 )
+
+Layout2RangeSettings = construct.Struct(
+	"wMin"                / construct.Int16sl,
+	"wMax"                / construct.Int16sl,
+	"wRes"                / construct.Int16sl,
+)
+
+Layout2RangeBlock = DescriptorFormat(
+    "wNumSubRanges"       / construct.Rebuild(construct.Int16ul, len_(this.subRanges)),
+	"subRanges"           / Layout2RangeSettings[this.wNumSubRanges],
+)

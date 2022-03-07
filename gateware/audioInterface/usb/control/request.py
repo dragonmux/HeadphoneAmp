@@ -9,6 +9,7 @@ from luna.gateware.usb.usb2.request import (
 from luna.gateware.stream.generator import StreamSerializer
 from typing import Iterable
 
+from ..descriptors import Layout2RangeBlock
 from .deserializer import StreamDeserializer
 
 __all__ = (
@@ -30,6 +31,13 @@ class AudioRequestHandler(USBRequestHandler):
 		# Alt-mode settings to propegate to the rest of the gateware
 		self.interfaces = interfaces
 		self.altModes = {interface: Signal(8, name = f'altMode{interface}') for interface in self.interfaces}
+
+		self.volumesRange = Layout2RangeBlock.build({
+			'subRanges': [
+				# We support volumes in the range -120dB to 0dB in 1dB increments
+				{'wMin': -120, 'wMax': 0, 'wRes': 1},
+			]
+		})
 
 		# Internals
 		self._powerSelect = Signal()
@@ -76,6 +84,8 @@ class AudioRequestHandler(USBRequestHandler):
 							with m.Switch(setup.request):
 								with m.Case(AudioClassSpecificRequestCodes.CUR):
 									m.next = 'HANDLE_CURRENT'
+								with m.Case(AudioClassSpecificRequestCodes.RANGE):
+									m.next = 'HANDLE_RANGE'
 								with m.Default():
 									m.next = 'UNHANDLED'
 						with m.Elif(setup.type == USBRequestType.STANDARD):
@@ -134,12 +144,14 @@ class AudioRequestHandler(USBRequestHandler):
 					with m.If(setup.is_in_request):
 						# Pull the correct setting
 						setting, length = self.settingForCurrent(m, setup)
+
 						# Hook up the transmitter ...
 						m.d.comb += [
 							transmitter.stream.connect(interface.tx),
 							Cat(transmitter.data).eq(setting),
 							transmitter.max_length.eq(length),
 						]
+
 						# ... then trigger it when requested if the lengths match ...
 						with m.If(self.interface.data_requested):
 							with m.If(setup.length == length):
@@ -152,6 +164,7 @@ class AudioRequestHandler(USBRequestHandler):
 						with m.If(interface.status_requested):
 							m.d.comb += interface.handshakes_out.ack.eq(1)
 							m.next = 'IDLE'
+
 					# Else this is a SET request
 					with m.Else():
 						# Pull the length for the setting
@@ -185,6 +198,38 @@ class AudioRequestHandler(USBRequestHandler):
 						with m.If(self.interface.handshakes_in.ack):
 							m.next = 'IDLE'
 
+				# HANDLE_RANGE -- handle a 'RANGE' request
+				with m.State('HANDLE_RANGE'):
+					# If this is a GET request
+					with m.If(setup.is_in_request):
+						# Pull the correct setting
+						settingRange, length = self.settingForRange(m, setup)
+
+						# Hook up the transmitter ...
+						m.d.comb += [
+							transmitter.stream.connect(interface.tx),
+							Cat(transmitter.data).eq(Cat(settingRange)),
+							transmitter.max_length.eq(length),
+						]
+
+						# ... then trigger it when requested if the lengths match ...
+						with m.If(self.interface.data_requested):
+							with m.If(setup.length == length):
+								m.d.comb += transmitter.start.eq(1)
+							with m.Else():
+								m.d.comb += interface.handshakes_out.stall.eq(1)
+								m.next = 'IDLE'
+
+						# ... and ACK our status stage.
+						with m.If(interface.status_requested):
+							m.d.comb += interface.handshakes_out.ack.eq(1)
+							m.next = 'IDLE'
+
+					# Else this is a SET request
+					with m.Else():
+						# We don't support setting any of the range values, so tell the host no
+						m.next = 'UNHANDLED'
+
 				# UNHANDLED -- we've received a request we don't know how to handle
 				with m.State('UNHANDLED'):
 					# When we next have an opportunity to stall, do so,
@@ -215,7 +260,16 @@ class AudioRequestHandler(USBRequestHandler):
 		# If the request is for the functional unit volume controls, return the length of a volume setting
 		with m.Elif(self._volumeSelect):
 			m.d.comb += length.eq(2)
+		return length
 
+	def lengthForRange(self, m : Module, setup : SetupPacket):
+		length = Signal(4)
+		m.d.comb += length.eq(0)
+
+		# Power Domains don't support this request, so length being 0 as a result works in our favour
+		# If the request is for the mixer (volume) controls, return the length of the volume settings
+		with m.If(self._volumeSelect):
+			m.d.comb += length.eq(8)
 		return length
 
 	def settingForCurrent(self, m : Module, setup : SetupPacket):
@@ -225,14 +279,25 @@ class AudioRequestHandler(USBRequestHandler):
 		# If the request is for the power domain, return the power state setting
 		with m.If(self._powerSelect):
 			m.d.comb += setting[0:8].eq(self.powerState)
-		# If the request is for the functional unit mute controls, return the length of a mute setting
+		# If the request is for one the functional unit mute controls, return the mute setting
 		with m.Elif(self._muteSelect):
 			m.d.comb += setting[0].eq(self.muteStates[setup.value[0:8]])
-		# If the request is for the functional unit volume controls, return the length of a volume setting
+		# If the request is for one the functional unit volume controls, return the volume setting
 		with m.Elif(self._volumeSelect):
 			m.d.comb += setting.eq(self.volumeStates[setup.value[0:8]])
 
 		return setting, self.lengthForCurrent(m, setup)
+
+	def settingForRange(self, m : Module, setup : SetupPacket):
+		setting = Array(Signal(8) for _ in range(8))
+		m.d.comb += Cat(setting).eq(0)
+
+		# If the request is for the functional unit volume controls, return the length of a volume setting
+		with m.If(self._volumeSelect):
+			for idx, value in enumerate(setting):
+				m.d.comb += value.eq(self.volumesRange[idx])
+
+		return setting, self.lengthForRange(m, setup)
 
 	def settingFromCurrent(self, m : Module, setup : SetupPacket, setting : Signal):
 		# If the request is for the power domain, return the power state setting
