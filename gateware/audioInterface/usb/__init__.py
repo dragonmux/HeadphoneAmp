@@ -149,8 +149,7 @@ class USBInterface(Elaboratable):
 
 				with interfaceDesc.EndpointDescriptor() as ep1Out:
 					ep1Out.bEndpointAddress = 0x01
-					# Isochronous asynchronous data endpoint
-					ep1Out.bmAttributes = 0x05
+					ep1Out.bmAttributes = USBTransferType.ISOCHRONOUS | USBSynchronizationType.ASYNC | USBUsageType.DATA
 					ep1Out.wMaxPacketSize = 196
 					ep1Out.bInterval = 4 # Spec requires we support a 1ms interval here.
 
