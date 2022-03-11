@@ -1,15 +1,18 @@
 from amaranth import Elaboratable, Module, Cat
 from amaranth.lib.fifo import AsyncFIFO
 
-from .i2s import I2S
+from ..usb import USBInterface
+from .i2s import *
+from .endpoint import *
 
 __all__ = (
 	'AudioStream'
 )
 
 class AudioStream(Elaboratable):
-	def __init__(self):
-		pass
+	def __init__(self, usb : USBInterface):
+		self._endpoint = AudioEndpoint()
+		usb.addEndpoint(self._endpoint)
 
 	def elaborate(self, platform):
 		m = Module()
