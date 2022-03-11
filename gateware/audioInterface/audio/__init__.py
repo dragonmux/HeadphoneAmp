@@ -9,15 +9,14 @@ __all__ = (
 
 class AudioStream(Elaboratable):
 	def __init__(self):
-		self.audioFIFO = AsyncFIFO(width = 48, depth = 256, r_domain = 'sync', w_domain = 'usb')
+		pass
 
 	def elaborate(self, platform):
 		m = Module()
 		# m.d.sync is the audio domain.
-		m.submodules.audioFIFO = self.audioFIFO
+		m.submodules.audioFIFO = fifo = AsyncFIFO(width = 48, depth = 256, r_domain = 'sync', w_domain = 'usb')
 		m.submodules.i2s = i2s = I2S()
 
-		fifo = self.audioFIFO
 		m.d.comb += fifo.r_en.eq(0)
 
 		with m.If(i2s.needSample):
