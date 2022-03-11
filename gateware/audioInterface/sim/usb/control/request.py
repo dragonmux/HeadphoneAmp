@@ -1,6 +1,5 @@
 from arachne.core.sim import sim_case
 from amaranth.sim import Simulator, Settle
-from luna.gateware.usb.request import SetupPacket
 from usb_protocol.types import USBRequestType, USBRequestRecipient, USBStandardRequests
 from usb_protocol.types.descriptors.uac3 import (
 	AudioClassSpecificRequestCodes, AudioControlInterfaceControlSelectors, FeatureUnitControlSelectors
