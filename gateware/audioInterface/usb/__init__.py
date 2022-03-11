@@ -15,6 +15,8 @@ __all__ = (
 
 class USBInterface(Elaboratable):
 	def __init__(self, *, resource):
+		self.audioRequestHandler = AudioRequestHandler(interfaces = (0, 1))
+
 		self._ulpiResource = resource
 
 	def elaborate(self, platform):
@@ -156,15 +158,13 @@ class USBInterface(Elaboratable):
 		descriptors.add_language_descriptor((LanguageIDs.ENGLISH_US, ))
 		ep0 = device.add_standard_control_endpoint(descriptors)
 
-		audioRequestHandler = AudioRequestHandler(interfaces = (0, 1))
-
 		def stallCondition(setup : SetupPacket):
 			return ~(
 				(setup.type == USBRequestType.STANDARD) |
-				audioRequestHandler.handlerCondition(setup)
+				self.audioRequestHandler.handlerCondition(setup)
 			)
 
-		ep0.add_request_handler(audioRequestHandler)
+		ep0.add_request_handler(self.audioRequestHandler)
 		ep0.add_request_handler(StallOnlyRequestHandler(stall_condition = stallCondition))
 
 		# Signal that we always want LUNA to try connecting
