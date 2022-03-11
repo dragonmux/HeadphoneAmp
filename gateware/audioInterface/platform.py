@@ -11,6 +11,8 @@ class AudioInterfacePlatform(LatticeICE40Platform):
 	package = 'BG121'
 	toolchain = 'IceStorm'
 
+	default_clk = 'sys_clk'
+
 	resources = [
 		Resource(
 			'sys_clk', 0,
@@ -27,6 +29,7 @@ class AudioInterfacePlatform(LatticeICE40Platform):
 			cs_n = 'E11 A7',
 			attrs = Attrs(IO_STANDARD = 'SB_LVCMOS')
 		),
+		# A7 is the internal config interface, E11 is the DAC's
 
 		ULPIResource(
 			'ulpi', 0,
@@ -62,6 +65,7 @@ class AudioInterfacePlatform(LatticeICE40Platform):
 		program_opts = None, do_program = False, **kwargs):
 		super().build(
 			elaboratable, name, build_dir, do_build, program_opts, do_program,
-			nextpnr_opts = ['--tmg-ripup', '--seed=3'], **kwargs
+			synth_opts = ['-abc9'], nextpnr_opts = ['--tmg-ripup', '--seed=0'],
+			**kwargs
 			#'--opt-timing',
 		)
