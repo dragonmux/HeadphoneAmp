@@ -18,6 +18,10 @@ class USBInterface(Elaboratable):
 		self.audioRequestHandler = AudioRequestHandler(interfaces = (0, 1))
 
 		self._ulpiResource = resource
+		self._endpoints = []
+
+	def addEndpoint(self, endpoint):
+		self._endpoints.append(endpoint)
 
 	def elaborate(self, platform):
 		m = Module()
@@ -166,6 +170,9 @@ class USBInterface(Elaboratable):
 
 		ep0.add_request_handler(self.audioRequestHandler)
 		ep0.add_request_handler(StallOnlyRequestHandler(stall_condition = stallCondition))
+
+		for endpoint in self._endpoints:
+			device.add_endpoint(endpoint)
 
 		# Signal that we always want LUNA to try connecting
 		m.d.comb += [
