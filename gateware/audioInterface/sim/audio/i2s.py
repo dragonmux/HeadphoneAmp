@@ -52,4 +52,9 @@ def i2s(sim : Simulator, dut : I2S):
 		yield Settle()
 		yield from readSample(0x110C)
 		yield from readSample(0xBADA)
+		assert (yield dut.needSample) == 1
+		yield
+		yield Settle()
+		assert (yield dut.needSample) == 0
+		yield
 	yield domainSync, 'sync'

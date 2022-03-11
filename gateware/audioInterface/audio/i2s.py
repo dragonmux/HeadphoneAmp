@@ -10,6 +10,7 @@ class I2S(Elaboratable):
 		self.clkDivider = Signal(range(12))
 		self.sampleBits = Signal(range(24))
 		self.sample = Array((Signal(24, name = 'sampleR'), Signal(24, name = 'sampleL')))
+		self.needSample = Signal()
 
 	def elaborate(self, platform):
 		m = Module()
@@ -21,6 +22,10 @@ class I2S(Elaboratable):
 		# 0 = Right, 1 = Left
 		channel = Signal()
 		sample = Array(Signal() for i in range(24))
+
+		needsSample = Signal()
+		m.d.sync += needsSample.eq(channel)
+		m.d.comb += self.needSample.eq(channel & (~needsSample))
 
 		with m.If(clkCounter == self.clkDivider):
 			m.d.sync += [
