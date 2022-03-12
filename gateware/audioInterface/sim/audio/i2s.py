@@ -1,4 +1,5 @@
 from arachne.core.sim import sim_case
+from arachne.util import dbg
 from amaranth import Record
 from amaranth.hdl.rec import DIR_FANOUT
 from amaranth.sim import Simulator, Settle
@@ -35,6 +36,7 @@ def i2s(sim : Simulator, dut : I2S):
 		for i in range(12):
 			yield
 		yield Settle()
+		dbg(f'Got {yield bus.data.o}, expected {bit}')
 		assert (yield bus.data.o) == bit
 		for i in range(12):
 			yield
@@ -50,8 +52,16 @@ def i2s(sim : Simulator, dut : I2S):
 		yield dut.sample[0].eq(0xBADA)
 		yield dut.sample[1].eq(0x110C)
 		yield Settle()
-		yield from readSample(0x110C)
+		yield
+		yield Settle()
+		assert (yield bus.rnl.o) == 1
+		assert (yield dut.needSample) == 0
+		yield
+		yield Settle()
+		assert (yield bus.rnl.o) == 0
+		assert (yield dut.needSample) == 1
 		yield from readSample(0xBADA)
+		yield from readSample(0x110C)
 		assert (yield dut.needSample) == 1
 		yield
 		yield Settle()
