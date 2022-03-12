@@ -19,31 +19,41 @@ class I2S(Elaboratable):
 		clkCounter = Signal(range(12))
 		audioClk = Signal(reset = 1)
 		sampleBit = Signal(range(24))
-		# 0 = Right, 1 = Left
-		channel = Signal()
+		# 0 = Left, 1 = Right
+		channel = Signal(reset = 1)
 		sample = Array(Signal() for i in range(24))
 
-		needsSample = Signal()
-		m.d.sync += needsSample.eq(channel)
-		m.d.comb += self.needSample.eq(channel & (~needsSample))
+		sampleLatch = Signal()
+		m.d.sync += sampleLatch.eq(channel)
+		m.d.comb += self.needSample.eq((~channel) & sampleLatch)
 
-		with m.If(clkCounter == self.clkDivider):
-			m.d.sync += [
-				clkCounter.eq(0),
-				audioClk.eq(~audioClk),
-			]
-
-			with m.If(audioClk):
-				with m.If(sampleBit == self.sampleBits):
+		with m.FSM():
+			with m.State('IDLE'):
+				m.d.sync += sampleLatch.eq(0)
+				with m.If((self.sampleBits != 0) & (self.clkDivider != 0)):
 					m.d.sync += [
-						channel.eq(~channel),
-						sampleBit.eq(0),
+						clkCounter.eq(self.clkDivider),
+						sampleBit.eq(self.sampleBits),
 					]
-				with m.Else():
-					m.d.sync += sampleBit.eq(sampleBit + 1)
+					m.next = 'RUN'
+			with m.State('RUN'):
+				with m.If(clkCounter == self.clkDivider):
+					m.d.sync += [
+						clkCounter.eq(0),
+						audioClk.eq(~audioClk),
+					]
 
-		with m.Else():
-			m.d.sync += clkCounter.eq(clkCounter + 1)
+					with m.If(audioClk):
+						with m.If(sampleBit == self.sampleBits):
+							m.d.sync += [
+								channel.eq(~channel),
+								sampleBit.eq(0),
+							]
+						with m.Else():
+							m.d.sync += sampleBit.eq(sampleBit + 1)
+
+				with m.Else():
+					m.d.sync += clkCounter.eq(clkCounter + 1)
 
 		m.d.comb += [
 			Cat(sample).eq(self.sample[channel]),
