@@ -16,6 +16,7 @@ class AudioStream(Elaboratable):
 		usb.addEndpoint(self._endpoint)
 
 		self.sampleBits = Signal(range(24))
+		self._needSample = Signal()
 
 	def elaborate(self, platform):
 		m = Module()
@@ -32,17 +33,18 @@ class AudioStream(Elaboratable):
 		writeSample = Signal()
 
 		# I²S control
-		m.d.comb += fifo.r_en.eq(0)
-
 		with m.If(i2s.needSample):
 			with m.If(fifo.r_rdy):
 				m.d.sync += Cat(i2s.sample).eq(fifo.r_data)
-				m.d.comb += fifo.r_en.eq(1)
 			with m.Else():
 				m.d.sync += Cat(i2s.sample).eq(0)
 
-		m.submodules += FFSynchronizer(self.sampleBits, i2s.sampleBits, o_domain = 'sync')
-		m.d.comb += i2s.clkDivider.eq(11)
+		m.submodules += FFSynchronizer(self.sampleBits - 1, i2s.sampleBits, o_domain = 'sync')
+		m.d.comb += [
+			i2s.clkDivider.eq(11),
+			fifo.r_en.eq(i2s.needSample),
+			self._needSample.eq(i2s.needSample)
+		]
 
 		# endpoint control
 		m.d.usb += writeSample.eq(latchSample & ~channel)
