@@ -9,7 +9,7 @@ class I2S(Elaboratable):
 		# Max division is 24, but because we need to generate both halfs of the clock this is 12.
 		self.clkDivider = Signal(range(12))
 		self.sampleBits = Signal(range(24))
-		self.sample = Array((Signal(24, name = 'sampleR'), Signal(24, name = 'sampleL')))
+		self.sample = Array((Signal(24, name = 'sampleL'), Signal(24, name = 'sampleR')))
 		self.needSample = Signal()
 
 	def elaborate(self, platform):
