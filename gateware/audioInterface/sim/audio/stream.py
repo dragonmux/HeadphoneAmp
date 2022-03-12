@@ -68,12 +68,34 @@ def audioStream(sim : Simulator, dut : USBInterface):
 		yield
 		yield Settle()
 		yield
+		yield Settle()
+		assert (yield bus.rnl.o) == 1
+		assert (yield audio._needSample) == 0
+		yield
+		yield Settle()
+		assert (yield bus.rnl.o) == 0
+		assert (yield audio._needSample) == 1
 		yield from readSample(0x0000)
+		assert (yield bus.rnl.o) == 1
+		assert (yield audio._needSample) == 0
 		yield from readSample(0x0000)
+		assert (yield bus.rnl.o) == 0
+		assert (yield audio._needSample) == 1
 		yield from readSample(0xDEAD)
+		assert (yield bus.rnl.o) == 1
+		assert (yield audio._needSample) == 0
 		yield from readSample(0xBEEF)
+		assert (yield bus.rnl.o) == 0
+		assert (yield audio._needSample) == 1
 		yield from readSample(0x110C)
+		assert (yield bus.rnl.o) == 1
+		assert (yield audio._needSample) == 0
 		yield from readSample(0xBADA)
+		assert (yield bus.rnl.o) == 0
+		assert (yield audio._needSample) == 1
+		yield
+		yield Settle()
+		assert (yield audio._needSample) == 0
 		yield
 		yield Settle()
 		yield

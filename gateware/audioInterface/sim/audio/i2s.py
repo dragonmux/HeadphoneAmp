@@ -61,7 +61,9 @@ def i2s(sim : Simulator, dut : I2S):
 		assert (yield bus.rnl.o) == 0
 		assert (yield dut.needSample) == 1
 		yield from readSample(0xBADA)
+		assert (yield bus.rnl.o) == 1
 		yield from readSample(0x110C)
+		assert (yield bus.rnl.o) == 0
 		assert (yield dut.needSample) == 1
 		yield
 		yield Settle()
