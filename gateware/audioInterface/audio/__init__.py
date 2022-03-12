@@ -1,5 +1,6 @@
 from amaranth import Elaboratable, Module, Signal, Array, Cat
 from amaranth.lib.fifo import AsyncFIFO
+from amaranth.lib.cdc import FFSynchronizer
 
 from ..usb import USBInterface
 from .i2s import *
@@ -14,6 +15,8 @@ class AudioStream(Elaboratable):
 		self._endpoint = AudioEndpoint(1)
 		usb.addEndpoint(self._endpoint)
 
+		self.sampleBits = Signal(range(24))
+
 	def elaborate(self, platform):
 		m = Module()
 		# m.d.sync is the audio domain.
@@ -22,12 +25,11 @@ class AudioStream(Elaboratable):
 
 		endpoint = self._endpoint
 		channel = Signal()
-		sampleBytes = Array(Signal(8) for _ in range(3))
+		sampleBytes = Array(Signal(8, name = f'sampleByte{i}') for i in range(3))
 		sampleSubByte = Signal(range(3))
-		sample = Array((Signal(24, name = 'sampleR'), Signal(24, name = 'sampleL')))
+		sample = Array((Signal(24, name = 'sampleL'), Signal(24, name = 'sampleR')))
+		latchSample = Signal()
 		writeSample = Signal()
-
-		sampleBits = Signal(range(24))
 
 		# I²S control
 		m.d.comb += fifo.r_en.eq(0)
@@ -39,23 +41,34 @@ class AudioStream(Elaboratable):
 			with m.Else():
 				m.d.sync += Cat(i2s.sample).eq(0)
 
+		m.submodules += FFSynchronizer(self.sampleBits, i2s.sampleBits, o_domain = 'sync')
+		m.d.comb += i2s.clkDivider.eq(11)
+
 		# endpoint control
-		m.d.usb += writeSample.eq(channel)
+		m.d.usb += writeSample.eq(latchSample & ~channel)
 
 		with m.If(endpoint.valid):
 			m.d.usb += sampleBytes[sampleSubByte].eq(endpoint.value)
 			# If we've collected enough bytes
-			with m.If(sampleSubByte == sampleBits[3:5]):
+			with m.If(sampleSubByte == (self.sampleBits[3:5] - 1)):
 				m.d.usb += [
 					sampleSubByte.eq(0),
-					sample[~channel].eq(Cat(sampleBytes)),
 					channel.eq(~channel),
+					latchSample.eq(1),
 				]
 			with m.Else():
-				m.d.usb += sampleSubByte.eq(sampleSubByte + 1)
+				m.d.usb += [
+					sampleSubByte.eq(sampleSubByte + 1),
+					latchSample.eq(0),
+				]
+		with m.Else():
+			m.d.usb += latchSample.eq(0)
+
+		with m.If(latchSample):
+			m.d.usb += sample[~channel].eq(Cat(sampleBytes))
 
 		m.d.comb += [
 			fifo.w_data.eq(Cat(sample)),
-			fifo.w_en.eq(writeSample & ~channel),
+			fifo.w_en.eq(writeSample),
 		]
 		return m
