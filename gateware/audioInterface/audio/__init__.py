@@ -12,10 +12,10 @@ __all__ = (
 
 class AudioStream(Elaboratable):
 	def __init__(self, usb : USBInterface):
+		self._requestHandler = usb.audioRequestHandler
 		self._endpoint = AudioEndpoint(1)
 		usb.addEndpoint(self._endpoint)
 
-		self.sampleBits = Signal(range(24))
 		self._needSample = Signal()
 
 	def elaborate(self, platform):
@@ -25,12 +25,19 @@ class AudioStream(Elaboratable):
 		m.submodules.i2s = i2s = I2S()
 
 		endpoint = self._endpoint
+		requestHandler = self._requestHandler
 		channel = Signal()
 		sampleBytes = Array(Signal(8, name = f'sampleByte{i}') for i in range(3))
 		sampleSubByte = Signal(range(3))
 		sample = Array((Signal(24, name = 'sampleL'), Signal(24, name = 'sampleR')))
 		latchSample = Signal()
 		writeSample = Signal()
+		sampleBits = Signal(range(25))
+
+		with m.If(requestHandler.altModes[1] == 1):
+			m.d.comb += sampleBits.eq(16)
+		with m.Else():
+			m.d.comb += sampleBits.eq(1)
 
 		# I²S control
 		with m.If(i2s.needSample):
@@ -39,7 +46,7 @@ class AudioStream(Elaboratable):
 			with m.Else():
 				m.d.sync += Cat(i2s.sample).eq(0)
 
-		m.submodules += FFSynchronizer(self.sampleBits - 1, i2s.sampleBits, o_domain = 'sync')
+		m.submodules += FFSynchronizer(sampleBits - 1, i2s.sampleBits, o_domain = 'sync')
 		m.d.comb += [
 			i2s.clkDivider.eq(5),
 			fifo.r_en.eq(i2s.needSample),
@@ -52,7 +59,7 @@ class AudioStream(Elaboratable):
 		with m.If(endpoint.valid):
 			m.d.usb += sampleBytes[sampleSubByte].eq(endpoint.value)
 			# If we've collected enough bytes
-			with m.If(sampleSubByte == (self.sampleBits[3:5] - 1)):
+			with m.If(sampleSubByte == (sampleBits[3:5] - 1)):
 				m.d.usb += [
 					sampleSubByte.eq(0),
 					channel.eq(~channel),
