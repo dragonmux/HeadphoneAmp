@@ -6,8 +6,8 @@ __all__ = (
 
 class I2S(Elaboratable):
 	def __init__(self):
-		# Max division is 24, but because we need to generate both halfs of the clock this is 12.
-		self.clkDivider = Signal(range(12))
+		# Max division is 12, but because we need to generate both halfs of the clock this is 6.
+		self.clkDivider = Signal(range(6))
 		self.sampleBits = Signal(range(24))
 		self.sample = Array((Signal(24, name = 'sampleL'), Signal(24, name = 'sampleR')))
 		self.needSample = Signal()
@@ -16,7 +16,7 @@ class I2S(Elaboratable):
 		m = Module()
 		bus = platform.request('i2s', 0)
 
-		clkCounter = Signal(range(12))
+		clkCounter = Signal.like(self.clkDivider)
 		audioClk = Signal(reset = 1)
 		sampleBit = Signal(range(24))
 		# 0 = Left, 1 = Right

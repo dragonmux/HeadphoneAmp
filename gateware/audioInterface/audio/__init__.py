@@ -41,7 +41,7 @@ class AudioStream(Elaboratable):
 
 		m.submodules += FFSynchronizer(self.sampleBits - 1, i2s.sampleBits, o_domain = 'sync')
 		m.d.comb += [
-			i2s.clkDivider.eq(11),
+			i2s.clkDivider.eq(5),
 			fifo.r_en.eq(i2s.needSample),
 			self._needSample.eq(i2s.needSample)
 		]
