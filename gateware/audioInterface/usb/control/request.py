@@ -1,7 +1,8 @@
 from amaranth import Module, Signal, Array, Cat
 from usb_protocol.types import USBRequestType, USBRequestRecipient, USBStandardRequests
 from usb_protocol.types.descriptors.uac3 import (
-	AudioClassSpecificRequestCodes, AudioControlInterfaceControlSelectors, FeatureUnitControlSelectors
+	AudioClassSpecificRequestCodes, AudioControlInterfaceControlSelectors, FeatureUnitControlSelectors,
+	Layout2RangeBlock
 )
 from luna.gateware.usb.usb2.request import (
 	USBRequestHandler, SetupPacket, StallOnlyRequestHandler, USBInStreamInterface, USBOutStreamInterface
@@ -9,7 +10,6 @@ from luna.gateware.usb.usb2.request import (
 from luna.gateware.stream.generator import StreamSerializer
 from typing import Iterable
 
-from ..descriptors import Layout2RangeBlock
 from .deserializer import StreamDeserializer
 
 __all__ = (

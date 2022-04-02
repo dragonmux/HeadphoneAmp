@@ -5,6 +5,7 @@ from usb_protocol.emitters.descriptors.standard import (
 	DeviceDescriptorCollection, LanguageIDs, DeviceClassCodes, MiscellaneousSubclassCodes, MultifunctionProtocolCodes
 )
 from usb_protocol.emitters.descriptors.uac3 import *
+from usb_protocol.contextmgrs.descriptors.uac3 import *
 
 from .types import *
 from .control import *
