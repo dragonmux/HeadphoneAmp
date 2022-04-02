@@ -8,9 +8,8 @@ from luna.gateware.usb.usb2.request import (
 	USBRequestHandler, SetupPacket, StallOnlyRequestHandler, USBInStreamInterface, USBOutStreamInterface
 )
 from luna.gateware.stream.generator import StreamSerializer
+from luna.gateware.usb.usb2.deserializer import StreamDeserializer
 from typing import Iterable
-
-from .deserializer import StreamDeserializer
 
 __all__ = (
 	'AudioRequestHandler',
