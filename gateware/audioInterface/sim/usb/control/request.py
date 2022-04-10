@@ -84,6 +84,8 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield Settle()
 		yield
 		for idx, value in enumerate(data):
+			assert (yield tx.first) == (1 if idx == 0 else 0)
+			assert (yield tx.last) == (1 if idx == len(data) - 1 else 0)
 			assert (yield tx.valid) == 1
 			assert (yield tx.payload) == value
 			assert (yield interface.handshakes_out.ack) == 0
