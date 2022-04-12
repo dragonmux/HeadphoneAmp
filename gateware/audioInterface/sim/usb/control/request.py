@@ -102,6 +102,24 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield
 		assert (yield interface.handshakes_out.ack) == 0
 
+	def receiveZLP():
+		assert (yield tx.valid) == 0
+		assert (yield tx.last) == 0
+		yield interface.status_requested.eq(1)
+		yield Settle()
+		yield
+		assert (yield tx.valid) == 1
+		assert (yield tx.last) == 1
+		yield interface.status_requested.eq(0)
+		yield interface.handshakes_in.ack.eq(1)
+		yield Settle()
+		yield
+		assert (yield tx.valid) == 0
+		assert (yield tx.last) == 0
+		yield interface.handshakes_in.ack.eq(0)
+		yield Settle()
+		yield
+
 	def sendData(*, data : Tuple):
 		yield rx.valid.eq(1)
 		for value in data:
@@ -131,23 +149,8 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 	def domainUSB():
 		yield
 		yield from sendSetupSetInterface()
-		assert (yield tx.valid) == 0
-		assert (yield tx.last) == 0
-		yield interface.status_requested.eq(1)
-		yield Settle()
-		yield
-		assert (yield tx.valid) == 1
-		assert (yield tx.last) == 1
-		yield interface.status_requested.eq(0)
-		yield interface.handshakes_in.ack.eq(1)
-		yield Settle()
-		yield
 		assert (yield dut.altModes[1]) == 0
-		assert (yield tx.valid) == 0
-		assert (yield tx.last) == 0
-		yield interface.handshakes_in.ack.eq(0)
-		yield Settle()
-		yield
+		yield from receiveZLP()
 		assert (yield dut.altModes[1]) == 1
 		yield from sendSetupMuteState(retrieve = True)
 		yield from receiveData(data = (0, ))
