@@ -2,10 +2,13 @@ from amaranth import Elaboratable, Module
 from luna.usb2 import USBDevice
 from usb_protocol.types import USBTransferType, USBSynchronizationType, USBUsageType
 from usb_protocol.emitters.descriptors.standard import (
-	DeviceDescriptorCollection, LanguageIDs, DeviceClassCodes, MiscellaneousSubclassCodes, MultifunctionProtocolCodes
+	DeviceDescriptorCollection, LanguageIDs, DeviceClassCodes, MiscellaneousSubclassCodes,
+	MultifunctionProtocolCodes, InterfaceClassCodes, ApplicationSubclassCodes, DFUProtocolCodes
 )
 from usb_protocol.emitters.descriptors.uac3 import *
 from usb_protocol.contextmgrs.descriptors.uac3 import *
+from usb_protocol.emitters.descriptors.dfu import *
+from usb_protocol.contextmgrs.descriptors.dfu import *
 
 from .types import *
 from .control import *
@@ -160,16 +163,42 @@ class USBInterface(Elaboratable):
 					ep1Out.wMaxPacketSize = 196
 					ep1Out.bInterval = 4 # Spec requires we support a 1ms interval here.
 
+			with configDesc.InterfaceAssociationDescriptor() as ifaceAssocDesc:
+				ifaceAssocDesc.bFirstInterface = 2
+				ifaceAssocDesc.bInterfaceCount = 1
+				ifaceAssocDesc.bFunctionClass = InterfaceClassCodes.APPLICATION
+				ifaceAssocDesc.bFunctionSubclass = ApplicationSubclassCodes.DFU
+				ifaceAssocDesc.bFunctionProtocol = DFUProtocolCodes.APPLICATION
+				ifaceAssocDesc.iFunction = 'Gateware DFU interface'
+
+			with configDesc.InterfaceDescriptor() as interfaceDesc:
+				interfaceDesc.bInterfaceNumber = 2
+				interfaceDesc.bAlternateSetting = 0
+				interfaceDesc.bInterfaceClass = InterfaceClassCodes.APPLICATION
+				interfaceDesc.bInterfaceSubclass = ApplicationSubclassCodes.DFU
+				interfaceDesc.bInterfaceProtocol = DFUProtocolCodes.APPLICATION
+				interfaceDesc.iInterface = 'Audio interface device gateware upgrade interface'
+
+				with FunctionalDescriptor(interfaceDesc) as functionalDesc:
+					functionalDesc.bmAttributes = (
+						DFUWillDetach.YES | DFUManifestationTollerant.NO | DFUCanUpload.NO | DFUCanDownload.YES
+					)
+					functionalDesc.wDetachTimeOut = 1000
+					functionalDesc.wTransferSize = 4096
+
 		descriptors.add_language_descriptor((LanguageIDs.ENGLISH_US, ))
 		ep0 = device.add_standard_control_endpoint(descriptors)
+		dfuRequestHandler = DFURequestHandler(interface = 2)
 
 		def stallCondition(setup : SetupPacket):
 			return ~(
 				(setup.type == USBRequestType.STANDARD) |
-				self.audioRequestHandler.handlerCondition(setup)
+				self.audioRequestHandler.handlerCondition(setup) |
+				dfuRequestHandler.handlerCondition(setup)
 			)
 
 		ep0.add_request_handler(self.audioRequestHandler)
+		ep0.add_request_handler(dfuRequestHandler)
 		ep0.add_request_handler(StallOnlyRequestHandler(stall_condition = stallCondition))
 
 		for endpoint in self._endpoints:
