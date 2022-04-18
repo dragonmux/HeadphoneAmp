@@ -1,5 +1,4 @@
 import construct
-from construct import this, len_
 
 from usb_protocol.types.descriptor import DescriptorField, DescriptorNumber, DescriptorFormat
 from usb_protocol.types.descriptors.uac3 import (
