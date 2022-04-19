@@ -9,6 +9,8 @@ from usb_protocol.emitters.descriptors.uac3 import *
 from usb_protocol.contextmgrs.descriptors.uac3 import *
 from usb_protocol.emitters.descriptors.dfu import *
 from usb_protocol.contextmgrs.descriptors.dfu import *
+from usb_protocol.emitters.descriptors.microsoft import PlatformDescriptorCollection
+from usb_protocol.contextmgrs.descriptors.microsoft import *
 
 from .types import *
 from .control import *
@@ -34,6 +36,7 @@ class USBInterface(Elaboratable):
 
 		descriptors = DeviceDescriptorCollection()
 		with descriptors.DeviceDescriptor() as deviceDesc:
+			deviceDesc.bcdUSB = 2.01
 			deviceDesc.bDeviceClass = DeviceClassCodes.MISCELLANEOUS
 			deviceDesc.bDeviceSubclass = MiscellaneousSubclassCodes.MULTIFUNCTION
 			deviceDesc.bDeviceProtocol = MultifunctionProtocolCodes.INTERFACE_ASSOCIATION
@@ -186,19 +189,39 @@ class USBInterface(Elaboratable):
 					functionalDesc.wDetachTimeOut = 1000
 					functionalDesc.wTransferSize = 4096
 
+		platformDescriptors = PlatformDescriptorCollection()
+		with descriptors.BOSDescriptor() as bos:
+			with PlatformDescriptor(bos, platform_collection = platformDescriptors) as platformDesc:
+				with platformDesc.DescriptorSetInformation() as descSetInfo:
+					descSetInfo.bMS_VendorCode = 1
+
+					with descSetInfo.SetHeaderDescriptor() as setHeader:
+						with setHeader.SubsetHeaderConfiguration() as subsetConfig:
+							subsetConfig.bConfigurationValue = 1
+
+							with subsetConfig.SubsetHeaderFunction() as subsetFunc:
+								subsetFunc.bFirstInterface = 2
+
+								with subsetFunc.FeatureCompatibleID() as compatID:
+									compatID.CompatibleID = 'WINUSB'
+									compatID.SubCompatibleID = ''
+
 		descriptors.add_language_descriptor((LanguageIDs.ENGLISH_US, ))
 		ep0 = device.add_standard_control_endpoint(descriptors)
 		dfuRequestHandler = DFURequestHandler(interface = 2)
+		windowsRequestHandler = WindowsRequestHandler(platformDescriptors)
 
 		def stallCondition(setup : SetupPacket):
 			return ~(
 				(setup.type == USBRequestType.STANDARD) |
 				self.audioRequestHandler.handlerCondition(setup) |
-				dfuRequestHandler.handlerCondition(setup)
+				dfuRequestHandler.handlerCondition(setup) |
+				windowsRequestHandler.handlerCondition(setup)
 			)
 
 		ep0.add_request_handler(self.audioRequestHandler)
 		ep0.add_request_handler(dfuRequestHandler)
+		ep0.add_request_handler(windowsRequestHandler)
 		ep0.add_request_handler(StallOnlyRequestHandler(stall_condition = stallCondition))
 
 		for endpoint in self._endpoints:
