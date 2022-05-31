@@ -65,7 +65,6 @@ class AudioInterfacePlatform(LatticeICE40Platform):
 		program_opts = None, do_program = False, **kwargs):
 		super().build(
 			elaboratable, name, build_dir, do_build, program_opts, do_program,
-			synth_opts = ['-abc9'], nextpnr_opts = ['--tmg-ripup', '--seed=0'],
+			synth_opts = '-abc9', nextpnr_opts = '--tmg-ripup --seed=0',
 			**kwargs
-			#'--opt-timing',
 		)
