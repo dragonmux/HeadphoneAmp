@@ -21,7 +21,7 @@ __all__ = (
 
 class USBInterface(Elaboratable):
 	def __init__(self, *, resource):
-		self.audioRequestHandler = AudioRequestHandler(interfaces = (0, 1))
+		self.audioRequestHandler = AudioRequestHandler(configuration = 1, interfaces = (0, 1))
 
 		self._ulpiResource = resource
 		self._endpoints = []
@@ -208,7 +208,7 @@ class USBInterface(Elaboratable):
 
 		descriptors.add_language_descriptor((LanguageIDs.ENGLISH_US, ))
 		ep0 = device.add_standard_control_endpoint(descriptors)
-		dfuRequestHandler = DFURequestHandler(interface = 2)
+		dfuRequestHandler = DFURequestHandler(configuration = 1, interface = 2)
 		windowsRequestHandler = WindowsRequestHandler(platformDescriptors)
 
 		def stallCondition(setup : SetupPacket):

@@ -19,7 +19,7 @@ __all__ = (
 )
 
 class AudioRequestHandler(USBRequestHandler):
-	def __init__(self, *, interfaces : Iterable[int]):
+	def __init__(self, *, configuration : int, interfaces : Iterable[int]):
 		super().__init__()
 		# Used to support getting/setting the power state of the device.
 		self.powerState = Signal(8)
@@ -27,6 +27,8 @@ class AudioRequestHandler(USBRequestHandler):
 		self.muteStates = Array(Signal(1, name = f'mute{i}') for i in range(3))
 		# Volume levels for the various channels
 		self.volumeStates = Array(Signal(16, name = f'volume{i}') for i in range(3))
+		# Which configuration we should be active in
+		self._configuration = configuration
 		# Alt-mode settings to propegate to the rest of the gateware
 		self.interfaces = interfaces
 		self.altModes = {interface: Signal(8, name = f'altMode{interface}') for interface in self.interfaces}
@@ -241,6 +243,7 @@ class AudioRequestHandler(USBRequestHandler):
 
 	def handlerCondition(self, setup : SetupPacket):
 		return (
+			(self.interface.active_config == self._configuration) &
 			((setup.type == USBRequestType.CLASS) | (setup.type == USBRequestType.STANDARD)) &
 			(setup.recipient == USBRequestRecipient.INTERFACE) &
 			(Cat(setup.index[0:8] == interface for interface in self.interfaces) != 0)

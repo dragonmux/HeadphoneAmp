@@ -19,9 +19,10 @@ class DFUStatus(IntEnum):
 	ok = 0
 
 class DFURequestHandler(USBRequestHandler):
-	def __init__(self, *, interface : int):
+	def __init__(self, *, configuration : int, interface : int):
 		super().__init__()
 
+		self._configuration = configuration
 		self._interface = interface
 		self._triggerReboot = Signal(name = "triggerReboot")
 
@@ -146,6 +147,7 @@ class DFURequestHandler(USBRequestHandler):
 
 	def handlerCondition(self, setup : SetupPacket):
 		return (
+			(self.interface.active_config == self._configuration) &
 			((setup.type == USBRequestType.CLASS) | (setup.type == USBRequestType.STANDARD)) &
 			(setup.recipient == USBRequestRecipient.INTERFACE) &
 			(setup.index == self._interface)

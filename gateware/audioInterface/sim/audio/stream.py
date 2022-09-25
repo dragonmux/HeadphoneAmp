@@ -29,7 +29,7 @@ class Platform:
 
 class USBInterface(Elaboratable):
 	def __init__(self):
-		self.audioRequestHandler = AudioRequestHandler(interfaces = (0, 1))
+		self.audioRequestHandler = AudioRequestHandler(configuration = 1, interfaces = (0, 1))
 
 	def addEndpoint(self, endpoint : AudioEndpoint):
 		self.endpoint = endpoint
@@ -115,9 +115,11 @@ def audioStream(sim : Simulator, dut : AudioInterface):
 	yield domainSync, 'sync'
 
 	def domainUSB():
+		yield interface.active_config.eq(1)
 		yield interface.tokenizer.endpoint.eq(1)
 		yield interface.tokenizer.is_out.eq(1)
 		yield requestHandler.altModes[1].eq(1)
+		yield Settle()
 		yield
 		yield Settle()
 		yield

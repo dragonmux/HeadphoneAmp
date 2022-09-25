@@ -8,7 +8,7 @@ from ....usb.control.dfu import DFURequestHandler, DFUState
 
 @sim_case(
 	domains = (('usb', 60e6),),
-	dut = DFURequestHandler(interface = 0)
+	dut = DFURequestHandler(configuration = 1, interface = 0)
 )
 def dfuRequestHandler(sim : Simulator, dut : DFURequestHandler):
 	interface = dut.interface
@@ -45,12 +45,6 @@ def dfuRequestHandler(sim : Simulator, dut : DFURequestHandler):
 			yield setup.index[8:16].eq(index[1])
 		yield setup.length.eq(length)
 		yield from setupReceived()
-
-	def sendSetupSetConfiguration():
-		# setup packet for device to set the active configuration
-		yield from sendSetup(type = USBRequestType.STANDARD, recipient = USBRequestRecipient.DEVICE,
-			retrieve = False, request = USBStandardRequests.SET_CONFIGURATION, value = (1, 0), index = (0, 0),
-			length = 0)
 
 	def sendSetupSetInterface():
 		# setup packet for interface 0
@@ -119,9 +113,9 @@ def dfuRequestHandler(sim : Simulator, dut : DFURequestHandler):
 		yield
 
 	def domainUSB():
+		yield interface.active_config.eq(1)
+		yield Settle()
 		yield
-		# yield from sendSetupSetConfiguration()
-		# yield from receiveZLP()
 		yield from sendSetupSetInterface()
 		yield from receiveZLP()
 		yield

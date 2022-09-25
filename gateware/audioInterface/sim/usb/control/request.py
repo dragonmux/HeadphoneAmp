@@ -10,7 +10,7 @@ from ....usb.control.request import AudioRequestHandler
 
 @sim_case(
 	domains = (('usb', 60e6),),
-	dut = AudioRequestHandler(interfaces = (0, 1))
+	dut = AudioRequestHandler(configuration = 1, interfaces = (0, 1))
 )
 def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 	interface = dut.interface
@@ -148,6 +148,8 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield
 
 	def domainUSB():
+		yield interface.active_config.eq(1)
+		yield Settle()
 		yield
 		yield from sendSetupSetInterface()
 		assert (yield dut.altModes[1]) == 0
