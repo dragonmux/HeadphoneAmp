@@ -122,8 +122,8 @@ def dfuRequestHandler(sim : Simulator, dut : DFURequestHandler):
 		yield
 		# yield from sendSetupSetConfiguration()
 		# yield from receiveZLP()
-		# yield from sendSetupSetInterface()
-		# yield from receiveZLP()
+		yield from sendSetupSetInterface()
+		yield from receiveZLP()
 		yield
 		yield
 		yield
