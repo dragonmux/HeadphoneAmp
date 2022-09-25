@@ -37,6 +37,7 @@ class USBInterface(Elaboratable):
 	def elaborate(self, platform):
 		m = Module()
 		m.submodules.endpoint = self.endpoint
+		m.submodules.audioRequestHandler = self.audioRequestHandler
 		return m
 
 class AudioInterface(Elaboratable):

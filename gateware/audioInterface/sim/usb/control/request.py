@@ -28,7 +28,8 @@ def audioRequestHandler(sim : Simulator, dut : AudioRequestHandler):
 		yield
 
 	def sendSetup(*, type : USBRequestType, retrieve : bool, request,
-		value : Tuple[int, int], index : Tuple[int, int], length : int):
+		value : Tuple[int, int], index : Tuple[int, int], length : int
+	):
 		yield setup.recipient.eq(USBRequestRecipient.INTERFACE)
 		yield setup.type.eq(type)
 		yield setup.is_in_request.eq(1 if retrieve else 0)
