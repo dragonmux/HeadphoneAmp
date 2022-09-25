@@ -77,7 +77,7 @@ def dfuRequestHandler(sim : Simulator, dut : DFURequestHandler):
 			assert (yield tx.valid) == 1
 			if check:
 				assert (yield tx.payload) == value
-			if (yield tx.payload) != value:
+			elif (yield tx.payload) != value:
 				result = False
 			assert (yield interface.handshakes_out.ack) == 0
 			if idx == len(data) - 1:
