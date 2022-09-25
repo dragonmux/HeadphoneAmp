@@ -33,12 +33,12 @@ class Platform:
 )
 def i2s(sim : Simulator, dut : I2S):
 	def readBit(bit):
-		for i in range(12):
+		for i in range(6):
 			yield
 		yield Settle()
 		dbg(f'Got {yield bus.data.o}, expected {bit}')
 		assert (yield bus.data.o) == bit
-		for i in range(12):
+		for i in range(6):
 			yield
 		yield Settle()
 
@@ -47,7 +47,7 @@ def i2s(sim : Simulator, dut : I2S):
 			yield from readBit((sample >> bit) & 1)
 
 	def domainSync():
-		yield dut.clkDivider.eq(11)
+		yield dut.clkDivider.eq(5)
 		yield dut.sampleBits.eq(15)
 		yield dut.sample[0].eq(0xBADA)
 		yield dut.sample[1].eq(0x110C)
