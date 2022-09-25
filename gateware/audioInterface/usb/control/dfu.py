@@ -50,7 +50,11 @@ class DFURequestHandler(USBRequestHandler):
 							m.next = 'UNHANDLED'
 
 			with m.State('HANDLE_DETACH'):
-				m.d.comb += triggerReboot.eq(1)
+				with m.If(interface.status_requested):
+					m.d.comb += self.send_zlp()
+
+				with m.If(interface.handshakes_in.ack):
+					m.d.usb += triggerReboot.eq(1)
 
 			with m.State('HANDLE_GET_STATUS'):
 				m.d.comb += [
