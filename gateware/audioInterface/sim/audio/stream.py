@@ -5,6 +5,7 @@ from amaranth.sim import Simulator, Settle
 
 from ...audio import AudioStream
 from ...audio.endpoint import AudioEndpoint
+from ...usb.control import AudioRequestHandler
 
 bus = Record(
 	layout = (
@@ -28,7 +29,7 @@ class Platform:
 
 class USBInterface(Elaboratable):
 	def __init__(self):
-		self.stream = AudioStream(self)
+		self.audioRequestHandler = AudioRequestHandler(interfaces = (0, 1))
 
 	def addEndpoint(self, endpoint : AudioEndpoint):
 		self.endpoint = endpoint
@@ -36,26 +37,37 @@ class USBInterface(Elaboratable):
 	def elaborate(self, platform):
 		m = Module()
 		m.submodules.endpoint = self.endpoint
-		m.submodules.audio = self.stream
+		return m
+
+class AudioInterface(Elaboratable):
+	def __init__(self):
+		self.usb = USBInterface()
+		self.audio = AudioStream(self.usb)
+
+	def elaborate(self, platform):
+		m = Module()
+		m.submodules.usb = self.usb
+		m.submodules.audio = self.audio
 		return m
 
 @sim_case(
 	domains = (('sync', 36.864e6), ('usb', 60e6)),
 	platform = Platform(),
-	dut = USBInterface()
+	dut = AudioInterface()
 )
-def audioStream(sim : Simulator, dut : USBInterface):
-	endpoint = dut.endpoint
-	audio = dut.stream
+def audioStream(sim : Simulator, dut : AudioInterface):
+	requestHandler = dut.usb.audioRequestHandler
+	endpoint = dut.usb.endpoint
+	audio = dut.audio
 	interface = endpoint.interface
 	stream = interface.rx
 
 	def readBit(bit):
-		for i in range(12):
+		for i in range(6):
 			yield
 		yield Settle()
 		(yield bus.data.o) == bit
-		for i in range(12):
+		for i in range(6):
 			yield
 		yield Settle()
 
@@ -104,7 +116,7 @@ def audioStream(sim : Simulator, dut : USBInterface):
 	def domainUSB():
 		yield interface.tokenizer.endpoint.eq(1)
 		yield interface.tokenizer.is_out.eq(1)
-		yield audio.sampleBits.eq(16)
+		yield requestHandler.altModes[1].eq(1)
 		yield
 		yield Settle()
 		yield
