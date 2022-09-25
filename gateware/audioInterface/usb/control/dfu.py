@@ -23,6 +23,7 @@ class DFURequestHandler(USBRequestHandler):
 		super().__init__()
 
 		self._interface = interface
+		self._triggerReboot = Signal(name = "triggerReboot")
 
 	def elaborate(self, platform) -> Module:
 		m = Module()
@@ -33,7 +34,7 @@ class DFURequestHandler(USBRequestHandler):
 			data_length = 6, domain = 'usb', stream_type = USBInStreamInterface, max_length_width = 3
 		)
 
-		triggerReboot = Signal()
+		triggerReboot = self._triggerReboot
 		warmbootSelect = Signal(2)
 
 		with m.FSM(domain = 'usb', name = 'dfu'):
