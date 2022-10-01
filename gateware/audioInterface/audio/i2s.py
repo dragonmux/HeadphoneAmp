@@ -85,7 +85,7 @@ class I2S(Elaboratable):
 						with m.Else():
 							with m.If(sampleBit == 1):
 								m.d.sync += channelNext.eq(~channelNext)
-							m.d.sync += sampleBit.eq(sampleBit - 1)
+							m.d.sync += sampleBit.eq(sampleBit + ((2 ** sampleBit.width) - 1))
 
 						m.d.sync += channelCurrent.eq(channelNext)
 
