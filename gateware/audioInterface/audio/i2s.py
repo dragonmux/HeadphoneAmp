@@ -25,7 +25,6 @@ class I2S(Elaboratable):
 		clkCounter = Signal.like(self.clkDivider)
 		audioClk = Signal(reset = 1)
 		sampleBit = Signal(range(24))
-		lastBit = Signal(range(24))
 		channelCurrent = Signal(Channel, reset = Channel.left)
 		channelNext = Signal(Channel, reset = Channel.right)
 		sample = Array(Signal() for _ in range(24))
@@ -44,7 +43,7 @@ class I2S(Elaboratable):
 				with m.If((self.sampleBits != 0) & (self.clkDivider != 0)):
 					m.d.sync += [
 						clkCounter.eq(self.clkDivider),
-						sampleBit.eq(self.sampleBits),
+						sampleBit.eq(0),
 					]
 					m.next = 'SETUP'
 
@@ -59,9 +58,8 @@ class I2S(Elaboratable):
 					with m.If(audioClk):
 						m.d.sync += [
 							channelNext.eq(~channelNext),
-							lastBit.eq(self.sampleBits - 1),
+							channelCurrent.eq(channelNext),
 						]
-						m.d.sync += channelCurrent.eq(channelNext)
 					with m.Else():
 						m.next = 'RUN'
 
@@ -81,13 +79,13 @@ class I2S(Elaboratable):
 					with m.If(audioClk):
 						# If we've put all the sample bits out for this channel then reset the sample bit
 						# counter, and switch to the other channel.
-						with m.If(sampleBit == self.sampleBits):
-							m.d.sync += sampleBit.eq(0)
+						with m.If(sampleBit == 0):
+							m.d.sync += sampleBit.eq(self.sampleBits)
 						# Else we need to put out the next sample bit and count up.
 						with m.Else():
-							with m.If(sampleBit == lastBit):
+							with m.If(sampleBit == 1):
 								m.d.sync += channelNext.eq(~channelNext)
-							m.d.sync += sampleBit.eq(sampleBit + 1)
+							m.d.sync += sampleBit.eq(sampleBit - 1)
 
 						m.d.sync += channelCurrent.eq(channelNext)
 
@@ -102,6 +100,6 @@ class I2S(Elaboratable):
 			Cat(sample).eq(self.sample[channelCurrent]),
 			bus.clk.o.eq(audioClk),
 			bus.rnl.o.eq(channelNext),
-			bus.data.o.eq(sample[self.sampleBits - sampleBit]),
+			bus.data.o.eq(sample[sampleBit]),
 		]
 		return m
