@@ -1,5 +1,6 @@
 from enum import IntEnum
 from amaranth import Elaboratable, Module, Signal, Array, Cat
+from amaranth.build import Platform
 
 __all__ = (
 	'I2S',
@@ -17,7 +18,7 @@ class I2S(Elaboratable):
 		self.sample = Array((Signal(24, name = 'sampleL'), Signal(24, name = 'sampleR')))
 		self.needSample = Signal()
 
-	def elaborate(self, platform):
+	def elaborate(self, platform : Platform) -> Module:
 		m = Module()
 		bus = platform.request('i2s', 0)
 
@@ -27,7 +28,7 @@ class I2S(Elaboratable):
 		lastBit = Signal(range(24))
 		channelCurrent = Signal(Channel, reset = Channel.left)
 		channelNext = Signal(Channel, reset = Channel.right)
-		sample = Array(Signal() for i in range(24))
+		sample = Array(Signal() for _ in range(24))
 
 		sampleLatch = Signal()
 		m.d.sync += sampleLatch.eq(channelCurrent)
