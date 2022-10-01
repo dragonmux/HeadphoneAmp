@@ -45,9 +45,29 @@ class I2S(Elaboratable):
 					m.d.sync += [
 						clkCounter.eq(self.clkDivider),
 						sampleBit.eq(self.sampleBits),
-						lastBit.eq(self.sampleBits - 1),
 					]
-					m.next = 'RUN'
+					m.next = 'SETUP'
+
+			with m.State('SETUP'):
+				with m.If(clkCounter == self.clkDivider):
+					m.d.sync += [
+						clkCounter.eq(0),
+						audioClk.eq(~audioClk),
+					]
+
+					# If the audio clock was high switch channels and calculate lastBit.
+					with m.If(audioClk):
+						m.d.sync += [
+							channelNext.eq(~channelNext),
+							lastBit.eq(self.sampleBits - 1),
+						]
+						m.d.sync += channelCurrent.eq(channelNext)
+					with m.Else():
+						m.next = 'RUN'
+
+				with m.Else():
+					m.d.sync += clkCounter.eq(clkCounter + 1)
+
 			with m.State('RUN'):
 				with m.If(clkCounter == self.clkDivider):
 					m.d.sync += [
