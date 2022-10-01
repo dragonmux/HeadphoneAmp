@@ -87,6 +87,10 @@ def audioStream(sim : Simulator, dut : AudioInterface):
 		yield
 		yield Settle()
 		assert (yield bus.rnl.o) == 0
+		assert (yield audio._needSample) == 0
+		yield from readBit(0)
+		yield Settle()
+		assert (yield bus.rnl.o) == 0
 		assert (yield audio._needSample) == 1
 		yield from readSample(0x0000)
 		assert (yield bus.rnl.o) == 1
