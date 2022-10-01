@@ -95,6 +95,9 @@ class I2S(Elaboratable):
 				with m.Else():
 					m.d.sync += clkCounter.eq(clkCounter + 1)
 
+				with m.If((self.sampleBits == 0) | (self.clkDivider == 0)):
+					m.next = 'IDLE'
+
 		m.d.comb += [
 			Cat(sample).eq(self.sample[channelCurrent]),
 			bus.clk.o.eq(audioClk),
