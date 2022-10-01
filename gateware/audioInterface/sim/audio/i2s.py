@@ -10,20 +10,24 @@ bus = Record(
 	layout = (
 		('clk', [
 			('o', 1, DIR_FANOUT),
+			('o_clk', 1, DIR_FANOUT),
 		]),
 		('rnl', [
 			('o', 1, DIR_FANOUT),
+			('o_clk', 1, DIR_FANOUT),
 		]),
 		('data', [
 			('o', 1, DIR_FANOUT),
+			('o_clk', 1, DIR_FANOUT),
 		]),
 	)
 )
 
 class Platform:
-	def request(self, name, number):
+	def request(self, name, number, *, xdr = {}):
 		assert name == 'i2s'
 		assert number == 0
+		assert isinstance(xdr, dict)
 		return bus
 
 @sim_case(
