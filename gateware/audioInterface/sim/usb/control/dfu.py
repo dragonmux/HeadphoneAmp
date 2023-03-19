@@ -1,12 +1,12 @@
-from arachne.core.sim import sim_case
-from amaranth.sim import Simulator, Settle
-from usb_protocol.types import USBRequestType, USBRequestRecipient, USBStandardRequests
-from usb_protocol.types.descriptors.dfu import DFURequests
+from ...framework import simCase
+from torii.sim import Simulator, Settle
+from usb_construct.types import USBRequestType, USBRequestRecipient, USBStandardRequests
+from usb_construct.types.descriptors.dfu import DFURequests
 from typing import Tuple, Union
 
 from ....usb.control.dfu import DFURequestHandler, DFUState
 
-@sim_case(
+@simCase(
 	domains = (('usb', 60e6),),
 	dut = DFURequestHandler(configuration = 1, interface = 0)
 )

@@ -1,8 +1,8 @@
-from arachne.core.sim import sim_case
+from ..framework import simCase
 from arachne.util import dbg
-from amaranth import Record
-from amaranth.hdl.rec import DIR_FANOUT
-from amaranth.sim import Simulator, Settle
+from torii import Record
+from torii.hdl.rec import DIR_FANOUT
+from torii.sim import Simulator, Settle
 
 from ...audio.i2s import I2S
 
@@ -30,7 +30,7 @@ class Platform:
 		assert isinstance(xdr, dict)
 		return bus
 
-@sim_case(
+@simCase(
 	domains = (('sync', 36.864e6), ),
 	platform = Platform(),
 	dut = I2S()

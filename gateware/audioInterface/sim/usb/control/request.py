@@ -1,14 +1,14 @@
-from arachne.core.sim import sim_case
-from amaranth.sim import Simulator, Settle
-from usb_protocol.types import USBRequestType, USBRequestRecipient, USBStandardRequests
-from usb_protocol.types.descriptors.uac3 import (
+from ...framework import simCase
+from torii.sim import Simulator, Settle
+from usb_construct.types import USBRequestType, USBRequestRecipient, USBStandardRequests
+from usb_construct.types.descriptors.uac3 import (
 	AudioClassSpecificRequestCodes, AudioControlInterfaceControlSelectors, FeatureUnitControlSelectors
 )
 from typing import Tuple
 
 from ....usb.control.request import AudioRequestHandler
 
-@sim_case(
+@simCase(
 	domains = (('usb', 60e6),),
 	dut = AudioRequestHandler(configuration = 1, interfaces = (0, 1))
 )

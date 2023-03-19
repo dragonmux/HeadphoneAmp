@@ -1,7 +1,7 @@
-from arachne.core.sim import sim_case
-from amaranth import Elaboratable, Module, Record
-from amaranth.hdl.rec import DIR_FANOUT
-from amaranth.sim import Simulator, Settle
+from ..framework import simCase
+from torii import Elaboratable, Module, Record
+from torii.hdl.rec import DIR_FANOUT
+from torii.sim import Simulator, Settle
 
 from ...audio import AudioStream
 from ...audio.endpoint import AudioEndpoint
@@ -55,7 +55,7 @@ class AudioInterface(Elaboratable):
 		m.submodules.audio = self.audio
 		return m
 
-@sim_case(
+@simCase(
 	domains = (('sync', 36.864e6), ('usb', 60e6)),
 	platform = Platform(),
 	dut = AudioInterface()

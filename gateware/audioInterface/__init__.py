@@ -19,8 +19,8 @@ def cli():
 	args = parser.parse_args()
 
 	if args.action == 'arachne-sim':
-		from arachne.core.sim import run_sims
-		run_sims(pkg = 'audioInterface/sim', result_dir = 'build')
+		from .sim.framework import runSims
+		runSims(pkg = 'audioInterface/sim', result_dir = 'build')
 		return 0
 	elif args.action == 'build':
 		platform = AudioInterfacePlatform()
