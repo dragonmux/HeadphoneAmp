@@ -80,11 +80,15 @@ class I2S(Elaboratable):
 						# If we've put all the sample bits out for this channel then reset the sample bit
 						# counter, and switch to the other channel.
 						with m.If(sampleBit == 0):
+							with m.If(self.sampleBits == 0):
+								m.next = 'IDLE'
 							m.d.sync += sampleBit.eq(self.sampleBits)
 						# Else we need to put out the next sample bit and count up.
 						with m.Else():
 							with m.If(sampleBit == 1):
 								m.d.sync += channelNext.eq(~channelNext)
+							# "Add" 1 to the sampleBit but by adding (2^sampleBit.width) - 1, we actually substract 1
+							# (a cheaty way to do substract-with-borrow cheaply on the iCE40)
 							m.d.sync += sampleBit.eq(sampleBit + ((2 ** sampleBit.width) - 1))
 
 						m.d.sync += channelCurrent.eq(channelNext)
@@ -93,7 +97,7 @@ class I2S(Elaboratable):
 				with m.Else():
 					m.d.sync += clkCounter.eq(clkCounter + 1)
 
-				with m.If((self.sampleBits == 0) | (self.clkDivider == 0)):
+				with m.If(self.clkDivider == 0):
 					m.next = 'IDLE'
 
 		m.d.comb += [
