@@ -46,7 +46,9 @@ class AudioStream(Elaboratable):
 			with m.Else():
 				m.d.sync += Cat(i2s.sample).eq(0)
 
-		m.submodules += FFSynchronizer(sampleBits - 1, i2s.sampleBits, o_domain = 'sync')
+		# Compute `sampleBits - 1` by manually doing subtract-with-borrow, which turns `- 1` into `+ ((2 ** width) - 1)`
+		# - subtraction is expensive on the iCE40, due to architecture.
+		m.submodules += FFSynchronizer(sampleBits + ((2 ** sampleBits.width) - 1), i2s.sampleBits, o_domain = 'sync')
 		m.d.comb += [
 			i2s.clkDivider.eq(5),
 			fifo.r_en.eq(i2s.needSample),
