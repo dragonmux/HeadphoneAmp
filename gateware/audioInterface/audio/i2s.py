@@ -20,8 +20,9 @@ class I2S(Elaboratable):
 
 	def elaborate(self, platform : Platform) -> Module:
 		m = Module()
-		bus = platform.request('i2s', 0)
+		bus = platform.request('i2s', 0, xdr = {'clk': 1, 'rnl': 1, 'data': 1})
 
+		syncClock = ClockSignal('sync')
 		clkCounter = Signal.like(self.clkDivider)
 		audioClk = Signal(reset = 1)
 		sampleBit = Signal(range(24))
@@ -105,5 +106,8 @@ class I2S(Elaboratable):
 			bus.clk.o.eq(audioClk),
 			bus.rnl.o.eq(channelNext),
 			bus.data.o.eq(sample[sampleBit]),
+			bus.clk.o_clk.eq(syncClock),
+			bus.rnl.o_clk.eq(syncClock),
+			bus.data.o_clk.eq(syncClock),
 		]
 		return m
