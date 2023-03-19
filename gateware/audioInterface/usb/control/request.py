@@ -1,14 +1,14 @@
-from amaranth import Module, Signal, Array, Cat
-from usb_protocol.types import USBRequestType, USBRequestRecipient, USBStandardRequests
-from usb_protocol.types.descriptors.uac3 import (
+from torii import Module, Signal, Array, Cat
+from usb_construct.types import USBRequestType, USBRequestRecipient, USBStandardRequests
+from usb_construct.types.descriptors.uac3 import (
 	AudioClassSpecificRequestCodes, AudioControlInterfaceControlSelectors, FeatureUnitControlSelectors,
 	Layout2RangeBlock
 )
-from luna.gateware.usb.usb2.request import (
+from sol_usb.gateware.usb.usb2.request import (
 	USBRequestHandler, SetupPacket, StallOnlyRequestHandler, USBInStreamInterface, USBOutStreamInterface
 )
-from luna.gateware.stream.generator import StreamSerializer
-from luna.gateware.usb.usb2.deserializer import StreamDeserializer
+from sol_usb.gateware.stream.generator import StreamSerializer
+from sol_usb.gateware.usb.usb2.deserializer import StreamDeserializer
 from typing import Iterable
 
 __all__ = (
@@ -74,7 +74,7 @@ class AudioRequestHandler(USBRequestHandler):
 			)
 		]
 
-		with m.If(self.handlerCondition(setup)):
+		with m.If(self.handler_condition(setup)):
 			with m.FSM(domain = 'usb'):
 				# IDLE -- no active request being handled
 				with m.State('IDLE'):
@@ -241,7 +241,7 @@ class AudioRequestHandler(USBRequestHandler):
 
 		return m
 
-	def handlerCondition(self, setup : SetupPacket):
+	def handler_condition(self, setup : SetupPacket):
 		return (
 			(self.interface.active_config == self._configuration) &
 			((setup.type == USBRequestType.CLASS) | (setup.type == USBRequestType.STANDARD)) &

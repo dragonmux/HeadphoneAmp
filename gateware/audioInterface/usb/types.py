@@ -1,6 +1,6 @@
-from usb_protocol.emitters.descriptor import ConstructEmitter
-from usb_protocol.emitters.descriptors.uac3 import AudioChannels, HeaderDescriptorEmitter
-from usb_protocol.contextmgrs.manager import DescriptorContextManager
+from usb_construct.emitters.descriptor import ConstructEmitter
+from usb_construct.emitters.descriptors.uac3 import AudioChannels, HeaderDescriptorEmitter
+from usb_construct.contextmgrs.manager import DescriptorContextManager
 from .descriptors import *
 
 __all__ = (

@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
-from amaranth import Elaboratable, Module, Signal, Memory, DomainRenamer
+from torii import Elaboratable, Module, Signal, Memory, DomainRenamer
 from struct import pack as structPack, unpack as structUnpack
-from usb_protocol.emitters.descriptors.microsoft import PlatformDescriptorCollection
-from luna.gateware.usb.stream import USBInStreamInterface
+from usb_construct.emitters.descriptors.microsoft import PlatformDescriptorCollection
+from sol_usb.gateware.usb.stream import USBInStreamInterface
 from typing import Tuple
 
 __all__ = (

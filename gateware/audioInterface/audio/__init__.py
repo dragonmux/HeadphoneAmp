@@ -1,6 +1,6 @@
-from amaranth import Elaboratable, Module, Signal, Array, Cat
-from amaranth.lib.fifo import AsyncFIFO
-from amaranth.lib.cdc import FFSynchronizer
+from torii import Elaboratable, Module, Signal, Array, Cat
+from torii.lib.fifo import AsyncFIFO
+from torii.lib.cdc import FFSynchronizer
 
 from ..usb import USBInterface
 from .i2s import *

@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
-from amaranth import Module, Signal
-from usb_protocol.types import USBRequestType, USBRequestRecipient
-from usb_protocol.types.descriptors.microsoft import MicrosoftRequests
-from usb_protocol.emitters.descriptors.microsoft import PlatformDescriptorCollection
-from luna.gateware.usb.usb2.request import USBRequestHandler, SetupPacket
+from torii import Module, Signal
+from usb_construct.types import USBRequestType, USBRequestRecipient
+from usb_construct.types.descriptors.microsoft import MicrosoftRequests
+from usb_construct.emitters.descriptors.microsoft import PlatformDescriptorCollection
+from sol_usb.gateware.usb.usb2.request import USBRequestHandler, SetupPacket
 
 from .descriptorSet import GetDescriptorSetHandler
 
@@ -34,7 +34,7 @@ class WindowsRequestHandler(USBRequestHandler):
 			# IDLE -- not handling any active request
 			with m.State('IDLE'):
 				# If we've received a new setup packet, handle it.
-				with m.If(setup.received & self.handlerCondition(setup)):
+				with m.If(setup.received & self.handler_condition(setup)):
 					with m.Switch(setup.index):
 						with m.Case(MicrosoftRequests.GET_DESCRIPTOR_SET):
 							m.next = 'CHECK_GET_DESCRIPTOR_SET'
@@ -84,7 +84,7 @@ class WindowsRequestHandler(USBRequestHandler):
 
 		return m
 
-	def handlerCondition(self, setup : SetupPacket):
+	def handler_condition(self, setup : SetupPacket):
 		return (
 			(setup.type == USBRequestType.VENDOR) &
 			(setup.recipient == USBRequestRecipient.DEVICE) &

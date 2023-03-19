@@ -1,7 +1,7 @@
 import construct
 
-from usb_protocol.types.descriptor import DescriptorField, DescriptorNumber, DescriptorFormat
-from usb_protocol.types.descriptors.uac3 import (
+from usb_construct.types.descriptor import DescriptorField, DescriptorNumber, DescriptorFormat
+from usb_construct.types.descriptors.uac3 import (
 	AudioClassSpecificDescriptorTypes, AudioClassSpecificACInterfaceDescriptorSubtypes,
 )
 

@@ -1,6 +1,6 @@
-from amaranth.vendor.lattice_ice40 import LatticeICE40Platform
-from amaranth.build import Resource, Subsignal, Pins, Clock, Attrs
-from amaranth_boards.resources.interface import SPIResource, ULPIResource
+from torii.platform.vendor.lattice_ice40 import LatticeICE40Platform
+from torii.build import Resource, Subsignal, Pins, Clock, Attrs
+from torii.platform.resources.interface import SPIResource, ULPIResource
 
 __all__ = (
 	'AudioInterfacePlatform',

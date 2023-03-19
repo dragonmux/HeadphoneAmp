@@ -1,6 +1,6 @@
 from enum import IntEnum
-from amaranth import Elaboratable, Module, Signal, Array, Cat
-from amaranth.build import Platform
+from torii import Elaboratable, Module, Signal, Array, Cat, ClockSignal
+from torii.build import Platform
 
 __all__ = (
 	'I2S',

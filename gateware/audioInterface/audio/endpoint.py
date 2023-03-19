@@ -1,5 +1,5 @@
-from amaranth import Elaboratable, Module, Signal
-from luna.gateware.usb.usb2.endpoint import EndpointInterface
+from torii import Elaboratable, Module, Signal
+from sol_usb.gateware.usb.usb2.endpoint import EndpointInterface
 
 __all__ = (
 	'AudioEndpoint',

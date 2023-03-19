@@ -1,9 +1,9 @@
-from amaranth import Module, Signal, Instance, Cat
-from usb_protocol.types import USBRequestType, USBRequestRecipient, USBStandardRequests
-from usb_protocol.types.descriptors.dfu import DFURequests
-from luna.gateware.usb.usb2.request import USBRequestHandler, SetupPacket
-from luna.gateware.usb.stream import USBInStreamInterface
-from luna.gateware.stream.generator import StreamSerializer
+from torii import Module, Signal, Instance, Cat
+from usb_construct.types import USBRequestType, USBRequestRecipient, USBStandardRequests
+from usb_construct.types.descriptors.dfu import DFURequests
+from sol_usb.gateware.usb.usb2.request import USBRequestHandler, SetupPacket
+from sol_usb.gateware.usb.stream import USBInStreamInterface
+from sol_usb.gateware.stream.generator import StreamSerializer
 from enum import IntEnum, unique
 
 __all__ = (
@@ -40,7 +40,7 @@ class DFURequestHandler(USBRequestHandler):
 
 		with m.FSM(domain = 'usb', name = 'dfu'):
 			with m.State('IDLE'):
-				with m.If(setup.received & self.handlerCondition(setup)):
+				with m.If(setup.received & self.handler_condition(setup)):
 					with m.If(setup.type == USBRequestType.CLASS):
 						with m.Switch(setup.request):
 							with m.Case(DFURequests.DETACH):
@@ -145,7 +145,7 @@ class DFURequestHandler(USBRequestHandler):
 		m.d.comb += warmbootSelect.eq(0b00)
 		return m
 
-	def handlerCondition(self, setup : SetupPacket):
+	def handler_condition(self, setup : SetupPacket):
 		return (
 			(self.interface.active_config == self._configuration) &
 			((setup.type == USBRequestType.CLASS) | (setup.type == USBRequestType.STANDARD)) &

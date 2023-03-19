@@ -1,16 +1,16 @@
-from amaranth import Elaboratable, Module
-from luna.usb2 import USBDevice
-from usb_protocol.types import USBTransferType, USBSynchronizationType, USBUsageType
-from usb_protocol.emitters.descriptors.standard import (
+from torii import Elaboratable, Module
+from sol_usb.usb2 import USBDevice
+from usb_construct.types import USBTransferType, USBSynchronizationType, USBUsageType
+from usb_construct.emitters.descriptors.standard import (
 	DeviceDescriptorCollection, LanguageIDs, DeviceClassCodes, MiscellaneousSubclassCodes,
 	MultifunctionProtocolCodes, InterfaceClassCodes, ApplicationSubclassCodes, DFUProtocolCodes
 )
-from usb_protocol.emitters.descriptors.uac3 import *
-from usb_protocol.contextmgrs.descriptors.uac3 import *
-from usb_protocol.emitters.descriptors.dfu import *
-from usb_protocol.contextmgrs.descriptors.dfu import *
-from usb_protocol.emitters.descriptors.microsoft import PlatformDescriptorCollection
-from usb_protocol.contextmgrs.descriptors.microsoft import *
+from usb_construct.emitters.descriptors.uac3 import *
+from usb_construct.contextmgrs.descriptors.uac3 import *
+from usb_construct.emitters.descriptors.dfu import *
+from usb_construct.contextmgrs.descriptors.dfu import *
+from usb_construct.emitters.descriptors.microsoft import PlatformDescriptorCollection
+from usb_construct.contextmgrs.descriptors.microsoft import *
 
 from .types import *
 from .control import *
@@ -184,7 +184,7 @@ class USBInterface(Elaboratable):
 
 				with FunctionalDescriptor(interfaceDesc) as functionalDesc:
 					functionalDesc.bmAttributes = (
-						DFUWillDetach.YES | DFUManifestationTollerant.NO | DFUCanUpload.NO | DFUCanDownload.YES
+						DFUWillDetach.YES | DFUManifestationTolerant.NO | DFUCanUpload.NO | DFUCanDownload.YES
 					)
 					functionalDesc.wDetachTimeOut = 1000
 					functionalDesc.wTransferSize = 4096
@@ -208,21 +208,10 @@ class USBInterface(Elaboratable):
 
 		descriptors.add_language_descriptor((LanguageIDs.ENGLISH_US, ))
 		ep0 = device.add_standard_control_endpoint(descriptors)
-		dfuRequestHandler = DFURequestHandler(configuration = 1, interface = 2)
-		windowsRequestHandler = WindowsRequestHandler(platformDescriptors)
-
-		def stallCondition(setup : SetupPacket):
-			return ~(
-				(setup.type == USBRequestType.STANDARD) |
-				self.audioRequestHandler.handlerCondition(setup) |
-				dfuRequestHandler.handlerCondition(setup) |
-				windowsRequestHandler.handlerCondition(setup)
-			)
 
 		ep0.add_request_handler(self.audioRequestHandler)
-		ep0.add_request_handler(dfuRequestHandler)
-		ep0.add_request_handler(windowsRequestHandler)
-		ep0.add_request_handler(StallOnlyRequestHandler(stall_condition = stallCondition))
+		ep0.add_request_handler(DFURequestHandler(configuration = 1, interface = 2))
+		ep0.add_request_handler(WindowsRequestHandler(platformDescriptors))
 
 		for endpoint in self._endpoints:
 			device.add_endpoint(endpoint)
