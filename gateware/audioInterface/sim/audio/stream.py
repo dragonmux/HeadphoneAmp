@@ -1,7 +1,7 @@
-from ..framework import simCase
 from torii import Elaboratable, Module, Record
 from torii.hdl.rec import DIR_FANOUT
 from torii.sim import Simulator, Settle
+from torii.test import ToriiTestCase
 
 from ...audio import AudioStream
 from ...audio.endpoint import AudioEndpoint
@@ -55,19 +55,12 @@ class AudioInterface(Elaboratable):
 		m.submodules.audio = self.audio
 		return m
 
-@simCase(
-	domains = (('sync', 36.864e6), ('usb', 60e6)),
-	platform = Platform(),
-	dut = AudioInterface()
-)
-def audioStream(sim : Simulator, dut : AudioInterface):
-	requestHandler = dut.usb.audioRequestHandler
-	endpoint = dut.usb.endpoint
-	audio = dut.audio
-	interface = endpoint.interface
-	stream = interface.rx
+class AudioStreamTestCase(ToriiTestCase):
+	dut = AudioInterface
+	domains = (('sync', 36.864e6), ('usb', 60e6))
+	platform = Platform()
 
-	def readBit(bit):
+	def readBit(self, bit):
 		for i in range(6):
 			yield
 		yield Settle()
@@ -76,105 +69,115 @@ def audioStream(sim : Simulator, dut : AudioInterface):
 			yield
 		yield Settle()
 
-	def readSample(sample):
+	def readSample(self, sample):
 		for bit in range(16):
-			yield from readBit((sample >> bit) & 1)
+			yield from self.readBit((sample >> bit) & 1)
 
-	def domainSync():
-		yield Settle()
-		yield
-		yield Settle()
-		yield
-		yield Settle()
-		assert (yield bus.rnl.o) == 1
-		assert (yield audio._needSample) == 0
-		yield
-		yield Settle()
-		assert (yield bus.rnl.o) == 0
-		assert (yield audio._needSample) == 0
-		yield from readBit(0)
-		yield Settle()
-		assert (yield bus.rnl.o) == 0
-		assert (yield audio._needSample) == 1
-		yield from readSample(0x0000)
-		assert (yield bus.rnl.o) == 1
-		assert (yield audio._needSample) == 0
-		yield from readSample(0x0000)
-		assert (yield bus.rnl.o) == 0
-		assert (yield audio._needSample) == 1
-		yield from readSample(0xDEAD)
-		assert (yield bus.rnl.o) == 1
-		assert (yield audio._needSample) == 0
-		yield from readSample(0xBEEF)
-		assert (yield bus.rnl.o) == 0
-		assert (yield audio._needSample) == 1
-		yield from readSample(0x110C)
-		assert (yield bus.rnl.o) == 1
-		assert (yield audio._needSample) == 0
-		yield from readSample(0xBADA)
-		assert (yield bus.rnl.o) == 0
-		assert (yield audio._needSample) == 1
-		yield
-		yield Settle()
-		assert (yield audio._needSample) == 0
-		yield
-		yield Settle()
-		yield
-	yield domainSync, 'sync'
+	@ToriiTestCase.simulation
+	def testAudioStream(self):
+		requestHandler = self.dut.usb.audioRequestHandler
+		endpoint = self.dut.usb.endpoint
+		audio = self.dut.audio
+		interface = endpoint.interface
+		stream = interface.rx
 
-	def domainUSB():
-		yield interface.active_config.eq(1)
-		yield interface.tokenizer.endpoint.eq(1)
-		yield interface.tokenizer.is_out.eq(1)
-		yield requestHandler.altModes[1].eq(1)
-		yield Settle()
-		yield
-		yield Settle()
-		yield
-		yield interface.tokenizer.new_token.eq(1)
-		yield Settle()
-		yield
-		yield interface.tokenizer.new_token.eq(0)
-		yield Settle()
-		yield
-		yield stream.valid.eq(1)
-		yield Settle()
-		yield
-		yield stream.next.eq(1)
-		# Send the first sample pair
-		yield stream.payload.eq(0xAD)
-		yield Settle()
-		yield
-		yield stream.payload.eq(0xDE)
-		yield Settle()
-		yield
-		yield stream.payload.eq(0xEF)
-		yield Settle()
-		yield
-		yield stream.payload.eq(0xBE)
-		yield Settle()
-		yield
-		# Then send the second
-		yield stream.payload.eq(0xDA)
-		yield Settle()
-		yield
-		yield stream.payload.eq(0xBA)
-		yield Settle()
-		yield
-		yield stream.payload.eq(0x0C)
-		yield Settle()
-		yield
-		yield stream.payload.eq(0x11)
-		yield Settle()
-		yield
-		yield stream.next.eq(0)
-		yield Settle()
-		yield
-		yield stream.valid.eq(0)
-		yield interface.rx_complete.eq(1)
-		yield Settle()
-		yield
-		yield interface.rx_complete.eq(0)
-		yield Settle()
-		yield
-	yield domainUSB, 'usb'
+		@ToriiTestCase.sync_domain(domain = 'sync')
+		def domainSync(self):
+			yield Settle()
+			yield
+			yield Settle()
+			yield
+			yield Settle()
+			assert (yield bus.rnl.o) == 1
+			assert (yield audio._needSample) == 0
+			yield
+			yield Settle()
+			assert (yield bus.rnl.o) == 0
+			assert (yield audio._needSample) == 0
+			yield from self.readBit(0)
+			yield Settle()
+			assert (yield bus.rnl.o) == 0
+			assert (yield audio._needSample) == 1
+			yield from self.readSample(0x0000)
+			assert (yield bus.rnl.o) == 1
+			assert (yield audio._needSample) == 0
+			yield from self.readSample(0x0000)
+			assert (yield bus.rnl.o) == 0
+			assert (yield audio._needSample) == 1
+			yield from self.readSample(0xDEAD)
+			assert (yield bus.rnl.o) == 1
+			assert (yield audio._needSample) == 0
+			yield from self.readSample(0xBEEF)
+			assert (yield bus.rnl.o) == 0
+			assert (yield audio._needSample) == 1
+			yield from self.readSample(0x110C)
+			assert (yield bus.rnl.o) == 1
+			assert (yield audio._needSample) == 0
+			yield from self.readSample(0xBADA)
+			assert (yield bus.rnl.o) == 0
+			assert (yield audio._needSample) == 1
+			yield
+			yield Settle()
+			assert (yield audio._needSample) == 0
+			yield
+			yield Settle()
+			yield
+		domainSync(self)
+
+		@ToriiTestCase.sync_domain(domain = 'usb')
+		def domainUSB(self):
+			yield interface.active_config.eq(1)
+			yield interface.tokenizer.endpoint.eq(1)
+			yield interface.tokenizer.is_out.eq(1)
+			yield requestHandler.altModes[1].eq(1)
+			yield Settle()
+			yield
+			yield Settle()
+			yield
+			yield interface.tokenizer.new_token.eq(1)
+			yield Settle()
+			yield
+			yield interface.tokenizer.new_token.eq(0)
+			yield Settle()
+			yield
+			yield stream.valid.eq(1)
+			yield Settle()
+			yield
+			yield stream.next.eq(1)
+			# Send the first sample pair
+			yield stream.payload.eq(0xAD)
+			yield Settle()
+			yield
+			yield stream.payload.eq(0xDE)
+			yield Settle()
+			yield
+			yield stream.payload.eq(0xEF)
+			yield Settle()
+			yield
+			yield stream.payload.eq(0xBE)
+			yield Settle()
+			yield
+			# Then send the second
+			yield stream.payload.eq(0xDA)
+			yield Settle()
+			yield
+			yield stream.payload.eq(0xBA)
+			yield Settle()
+			yield
+			yield stream.payload.eq(0x0C)
+			yield Settle()
+			yield
+			yield stream.payload.eq(0x11)
+			yield Settle()
+			yield
+			yield stream.next.eq(0)
+			yield Settle()
+			yield
+			yield stream.valid.eq(0)
+			yield interface.rx_complete.eq(1)
+			yield Settle()
+			yield
+			yield interface.rx_complete.eq(0)
+			yield Settle()
+			yield
+		domainUSB(self)
