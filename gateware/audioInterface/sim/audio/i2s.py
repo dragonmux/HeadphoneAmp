@@ -31,7 +31,7 @@ class Platform:
 		return bus
 
 class I2STestCase(ToriiTestCase):
-	dut = I2S
+	dut : I2S = I2S
 	domains = (('sync', 36.864e6), )
 	platform = Platform()
 

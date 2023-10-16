@@ -56,7 +56,7 @@ class AudioInterface(Elaboratable):
 		return m
 
 class AudioStreamTestCase(ToriiTestCase):
-	dut = AudioInterface
+	dut : AudioInterface = AudioInterface
 	domains = (('sync', 36.864e6), ('usb', 60e6))
 	platform = Platform()
 
