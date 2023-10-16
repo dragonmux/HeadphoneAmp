@@ -4,9 +4,9 @@
 from sys import argv, path, exit
 from pathlib import Path
 
-piclePath = Path(argv[0]).resolve().parent
-if (piclePath / 'audioInterface').is_dir():
-	path.insert(0, str(piclePath))
+audioInterfacePath = Path(argv[0]).resolve().parent
+if (audioInterfacePath / 'audioInterface').is_dir():
+	path.insert(0, str(audioInterfacePath))
 else:
 	raise ImportError('Cannot find the audio interface gateware')
 
