@@ -29,8 +29,14 @@ def cli():
 
 	# Dispatch the action requested
 	if args.action == 'sim':
-		from .sim.framework import runSims
-		runSims(pkg = 'audioInterface/sim', result_dir = 'build')
+		from unittest.loader import TestLoader
+		from unittest.runner import TextTestRunner
+
+		loader = TestLoader()
+		tests = loader.discover(start_dir = 'audioInterface.sim', pattern = '*.py')
+
+		runner = TextTestRunner()
+		runner.run(tests)
 		return 0
 	elif args.action == 'build':
 		platform = AudioInterfacePlatform()
