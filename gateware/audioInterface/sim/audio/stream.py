@@ -1,6 +1,6 @@
 from torii import Elaboratable, Module, Record
 from torii.hdl.rec import DIR_FANOUT
-from torii.sim import Simulator, Settle
+from torii.sim import Settle
 from torii.test import ToriiTestCase
 
 from ...audio import AudioStream
