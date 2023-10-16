@@ -8,17 +8,27 @@ __all__ = (
 
 def cli():
 	from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-	from arachne.cli import register_cli
 
+	# Configure basic logging so it's ready to go from right at the start
+	configureLogging()
+
+	# Build the command line parser
 	parser = ArgumentParser(formatter_class = ArgumentDefaultsHelpFormatter,
 		description = 'OpenPICle')
+	parser.add_argument('--verbose', '-v', action = 'store_true', help = 'Enable debugging output')
+
 	actions = parser.add_subparsers(dest = 'action', required = True)
-	actions.add_parser('build', help = 'build the Headphone Amp+DAC audio interface gateware')
+	actions.add_parser('build', help = 'Build the Headphone Amp+DAC audio interface gateware')
+	actions.add_parser('sim', help = 'Simulate and test the gateware components')
 
-	register_cli(parser = parser)
+	# Parse the command line and, if `-v` is specified, bump up the logging level
 	args = parser.parse_args()
+	if args.verbose:
+		from logging import root, DEBUG
+		root.setLevel(DEBUG)
 
-	if args.action == 'arachne-sim':
+	# Dispatch the action requested
+	if args.action == 'sim':
 		from .sim.framework import runSims
 		runSims(pkg = 'audioInterface/sim', result_dir = 'build')
 		return 0
@@ -26,3 +36,14 @@ def cli():
 		platform = AudioInterfacePlatform()
 		platform.build(AudioInterface(), name = 'audioInterface')
 		return 0
+
+def configureLogging():
+	from rich.logging import RichHandler
+	import logging
+
+	logging.basicConfig(
+		force = True,
+		format = '%(message)s',
+		level = logging.INFO,
+		handlers = [RichHandler(rich_tracebacks = True, show_path = False)]
+	)
