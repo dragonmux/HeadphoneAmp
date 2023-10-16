@@ -1,13 +1,19 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from typing import Dict, List, Union, Tuple
-from arachne.util import *
+from sys import stdout
 from torii.sim import Simulator
 
 __all__ = (
 	'simCase',
 	'runSims',
 )
+
+def log(str, end = '\n', file = stdout):
+	print(f'\x1B[35m[*]\x1B[0m {str}', end = end, file = file)
+
+def inf(str, end = '\n', file = stdout):
+	print(f'\x1B[36m[~]\x1B[0m {str}', end = end, file = file)
 
 def _collectSims(*, pkg) -> List[Dict[str, Union[str, Tuple[Simulator, str]]]]:
 	from pkgutil   import walk_packages
