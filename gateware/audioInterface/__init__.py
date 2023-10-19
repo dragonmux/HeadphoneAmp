@@ -14,12 +14,16 @@ def cli():
 
 	# Build the command line parser
 	parser = ArgumentParser(formatter_class = ArgumentDefaultsHelpFormatter,
-		description = 'OpenPICle')
+		description = 'Headphone Amp+DAC audio interface')
 	parser.add_argument('--verbose', '-v', action = 'store_true', help = 'Enable debugging output')
 
 	actions = parser.add_subparsers(dest = 'action', required = True)
-	actions.add_parser('build', help = 'Build the Headphone Amp+DAC audio interface gateware')
+	buildAction = actions.add_parser('build', help = 'Build the Headphone Amp+DAC audio interface gateware')
 	actions.add_parser('sim', help = 'Simulate and test the gateware components')
+
+	# Allow the user to pick a seed if their toolchain is not giving good nextpnr runs
+	buildAction.add_argument('--seed', action = 'store', type = int, default = 0,
+		help = 'The nextpnr seed to use for the gateware build (default 0)')
 
 	# Parse the command line and, if `-v` is specified, bump up the logging level
 	args = parser.parse_args()
@@ -40,7 +44,7 @@ def cli():
 		return 0
 	elif args.action == 'build':
 		platform = AudioInterfacePlatform()
-		platform.build(AudioInterface(), name = 'audioInterface')
+		platform.build(AudioInterface(), name = 'audioInterface', pnrSeed = args.seed)
 		return 0
 
 def configureLogging():

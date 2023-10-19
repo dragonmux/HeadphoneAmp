@@ -1,4 +1,4 @@
-from torii.platform.vendor.lattice_ice40 import LatticeICE40Platform
+from torii.platform.vendor.lattice.ice40 import ICE40Platform
 from torii.build import Resource, Subsignal, Pins, Clock, Attrs
 from torii.platform.resources.interface import SPIResource, ULPIResource
 
@@ -6,7 +6,7 @@ __all__ = (
 	'AudioInterfacePlatform',
 )
 
-class AudioInterfacePlatform(LatticeICE40Platform):
+class AudioInterfacePlatform(ICE40Platform):
 	device = 'iCE40HX8K'
 	package = 'BG121'
 	toolchain = 'IceStorm'
@@ -62,9 +62,9 @@ class AudioInterfacePlatform(LatticeICE40Platform):
 	connectors = []
 
 	def build(self, elaboratable, name = 'top', build_dir = 'build', do_build = True,
-		program_opts = None, do_program = False, **kwargs):
+		program_opts = None, do_program = False, pnrSeed = 0, **kwargs):
 		super().build(
 			elaboratable, name, build_dir, do_build, program_opts, do_program,
-			synth_opts = '-abc9', nextpnr_opts = '--tmg-ripup --seed=0',
+			synth_opts = '-abc9', nextpnr_opts = ['--tmg-ripup', f'--seed={pnrSeed}'],
 			**kwargs
 		)
