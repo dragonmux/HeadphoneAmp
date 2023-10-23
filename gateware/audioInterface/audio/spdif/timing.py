@@ -80,26 +80,41 @@ class Timing(Elaboratable):
 				# If we've not had a transition in too long and we've exceeded the long bit time, we
 				# might have captured too short of a long bit time and instead have grabbed a BMC bit
 				# so copy the timer value back to the long timer and switch back
-				with m.If(shortTimer == longTimer):
-					m.d.usb += longTimer.eq(shortTimer + 1)
+				with m.If((shortTimer + 1) == longTimer):
+					# Check if a transition is happening, if it's not, assume longer bit
+					with m.If(dataInPrev == dataInCurr):
+						m.d.usb += longTimer.eq(shortTimer + 1)
+					# If it is, we just got two same length bits, we're in the middle of some BMC stuff.
+					with m.Else():
+						m.d.usb += longTimer.eq(0)
 					m.next = 'SYNC-Z-BEGIN'
 				# Otherwise if the timer is about to expire, abort back to idle
 				with m.Elif(shortTimer == 189):
 					m.next = 'IDLE'
 				# Hopefully we just got a short bit time, so capture it, reset the timer and check for the second
 				with m.Elif(dataInPrev != dataInCurr):
-					m.d.usb += [
-						bitTime.eq(shortTimer),
-						shortTimer.eq(0),
-					]
-					m.next = 'SYNC-Z-SHORT2'
+					# Well, having first checked that the long time period is ~3x this one
+					checkTime = shortTimer * 3
+					# If it falls long of the right range, this was a different sync sequence (Y or X)
+					with m.If(checkTime > (longTimer + 7)):
+						m.next = 'IDLE'
+					# If it falls short of the right range, this was BMC data (01 sequence, specifically)
+					with m.Elif(checkTime < (longTimer - 7)):
+						m.d.usb += longTimer.eq(0)
+						m.next = 'SYNC-Z-BEGIN'
+					with m.Else():
+						m.d.usb += [
+							bitTime.eq(shortTimer),
+							shortTimer.eq(0),
+						]
+						m.next = 'SYNC-Z-SHORT2'
 				with m.Else():
 					m.d.usb += shortTimer.eq(shortTimer + 1)
 
 			with m.State('SYNC-Z-SHORT2'):
 				# If we exceed the previous bit time by more than a couple of counts, more than likely
 				# this was not a Z sync sequence. Abort back to idle.
-				with m.If((shortTimer == (bitTime + 3)) & dataInPrev == dataInCurr):
+				with m.If((shortTimer == (bitTime + 3)) & (dataInPrev == dataInCurr)):
 					m.next = 'IDLE'
 				# If the timer is about to expire, abort back to idle.
 				with m.Elif(shortTimer == 189):
