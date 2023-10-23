@@ -102,6 +102,33 @@ class TimingTestCase(ToriiTestCase):
 			# Check we end back in the IDLE state as a result
 			yield
 			self.assertEqual((yield self.dut.reset), 1)
+			# Fast forward to the third (fail to sync on 01 bit sequence)
+			yield from self.step(83)
+			self.assertEqual((yield self.dut.reset), 0)
+			# Check we end back in the IDLE state as a result
+			yield
+			self.assertEqual((yield self.dut.reset), 1)
+			# Fast forward to the end of the 'Z' sync sequence
+			yield from self.step(189)
+			self.assertEqual((yield self.dut.reset), 0)
+			self.assertEqual((yield self.dut.syncing), 1)
+			self.assertEqual((yield self.dut.frameBegin), 0)
+			# Check that we synchronised to it
+			yield
+			self.assertEqual((yield self.dut.reset), 0)
+			self.assertEqual((yield self.dut.syncing), 0)
+			self.assertEqual((yield self.dut.frameBegin), 1)
+			# Then check that the frame block begin signal goes low
+			yield
+			self.assertEqual((yield self.dut.reset), 0)
+			self.assertEqual((yield self.dut.syncing), 0)
+			self.assertEqual((yield self.dut.frameBegin), 0)
+			# Fast forward to loosing sync again
+			yield from self.step(127)
+			self.assertEqual((yield self.dut.reset), 0)
+			# Check we end back in the IDLE state as a result
+			yield
+			self.assertEqual((yield self.dut.reset), 1)
 
 		@ToriiTestCase.comb_domain
 		def domainSPDIF(self : TimingTestCase):
@@ -125,7 +152,7 @@ class TimingTestCase(ToriiTestCase):
 			yield from self.bmc(data = 0)
 			yield from self.bmc(data = 1)
 			# Finally, check that the logic times out after sufficient idle time as if the link just got unplugged
-			for _ in range(28):
+			for _ in range(4):
 				yield from self.bitTime()
 
 		domainSync(self)
