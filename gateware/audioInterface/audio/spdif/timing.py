@@ -53,6 +53,12 @@ class Timing(Elaboratable):
 		bitTime = Signal(range(190))
 		longTime = Signal(range(570))
 
+		subBit = Signal()
+		bitCount = Signal(range(28))
+		frameCount = Signal(range(192))
+		timeSinceLastEdge = Signal(range(570))
+		channel = self.channel
+
 		with m.FSM(domain = 'usb') as syncFSM:
 			m.d.comb += [
 				self.reset.eq(syncFSM.ongoing('IDLE')),
@@ -146,6 +152,12 @@ class Timing(Elaboratable):
 						m.d.usb += [
 							self.syncing.eq(0),
 							self.frameBegin.eq(1),
+							channel.eq(0),
+							subBit.eq(0),
+							bitCount.eq(0),
+							frameCount.eq(0),
+							shortTimer.eq(0),
+							timeSinceLastEdge.eq(0),
 						]
 						m.next = 'SUBFRAME'
 					# Otherwise it's fallen outside of the allowed range, so abort back to idle
@@ -156,6 +168,31 @@ class Timing(Elaboratable):
 					m.next = 'IDLE'
 
 			with m.State('SUBFRAME'):
+				# Increment the bit timer
+				m.d.usb += shortTimer.eq(shortTimer + 1)
+				# If we reach the end of a bit time with this
+				with m.If(shortTimer == bitTime):
+					# Mark that we finished a sub-bit and reset the timer
+					m.d.usb += [
+						subBit.eq(~subBit),
+						shortTimer.eq(0),
+					]
+					# If we finished the second in a bit period, advance the bit counter
+					with m.If(subBit):
+						m.d.usb += bitCount.eq(bitCount + 1)
+
+				# Check for edge transitions
+				with m.If(dataInPrev != dataInCurr):
+					m.d.usb += [
+						timeSinceLastEdge.eq(0),
+						shortTimer.eq(0),
+					]
+				with m.Else():
+					m.d.usb += timeSinceLastEdge.eq(timeSinceLastEdge + 1)
+					# If it's been 3 bit periods since we last saw an edge transition, assume disconnect/desync
+					with m.If(timeSinceLastEdge > longTime):
+						m.next = 'IDLE'
+
 				m.d.usb += self.frameBegin.eq(0)
 
 		# Synchronise the input S/PDIF signal and time delay it to allow us to detect edges
