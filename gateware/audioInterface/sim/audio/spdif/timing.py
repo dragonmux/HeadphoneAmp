@@ -18,13 +18,56 @@ class TimingTestCase(ToriiTestCase):
 	# Biphase Mark Codes data into the controller
 	def bmc(self, *, data : int):
 		# Get the current state of the signal
-		value = yield self.dut.spdifIn
+		spdif = self.dut.spdifIn
+		value = yield spdif
 		# Create the first bit inversion to start the bit, and step to the second bit time
-		yield self.dut.spdifIn.eq(1 - value)
+		yield spdif.eq(1 - value)
 		yield from self.bitTime()
 		# Encode the transition that defines this as a 0 or 1
 		if data == 1:
-			yield self.dut.spdifIn.eq(value)
+			yield spdif.eq(value)
+		yield from self.bitTime()
+
+	def syncY(self):
+		# Get the current state of the signal
+		spdif = self.dut.spdifIn
+		value = yield spdif
+		# Generate the first transition for the sync sequence, wait 3 time units
+		yield spdif.eq(1 - value)
+		yield from self.bitTime()
+		yield from self.bitTime()
+		yield from self.bitTime()
+		# Generate the second transition and wait another 2 time units
+		yield spdif.eq(value)
+		yield from self.bitTime()
+		yield from self.bitTime()
+		# Generate the third transition, waiting 1 time unit
+		yield spdif.eq(1 - value)
+		yield from self.bitTime()
+		# Generate the final transition, waiting 2 more time units.
+		yield spdif.eq(value)
+		yield from self.bitTime()
+		yield from self.bitTime()
+
+	def syncZ(self):
+		# Get the current state of the signal
+		spdif = self.dut.spdifIn
+		value = yield spdif
+		# Generate the first transition for the sync sequence, wait 3 time units
+		yield spdif.eq(1 - value)
+		yield from self.bitTime()
+		yield from self.bitTime()
+		yield from self.bitTime()
+		# Generate the second transition and wait 1 time unit
+		yield spdif.eq(value)
+		yield from self.bitTime()
+		# Generate the third transition, waiting 1 time unit again
+		yield spdif.eq(1 - value)
+		yield from self.bitTime()
+		# Generate the final transition, waiting 3 more time units.
+		yield spdif.eq(value)
+		yield from self.bitTime()
+		yield from self.bitTime()
 		yield from self.bitTime()
 
 	@ToriiTestCase.simulation
@@ -73,33 +116,11 @@ class TimingTestCase(ToriiTestCase):
 			yield from self.bmc(data = 1)
 			yield from self.bmc(data = 0)
 			# Now encode preamble Y to validate the timer logic
-			yield spdif.eq(1)
-			yield from self.bitTime()
-			yield from self.bitTime()
-			yield from self.bitTime()
-			yield spdif.eq(0)
-			yield from self.bitTime()
-			yield from self.bitTime()
-			yield spdif.eq(1)
-			yield from self.bitTime()
-			yield spdif.eq(0)
-			yield from self.bitTime()
-			yield from self.bitTime()
+			yield from self.syncY()
 			# Encode another bit (this time a 1-bit) just in case
 			yield from self.bmc(data = 1)
 			# Now encode preamble Z to validate we get a lock and sync
-			yield spdif.eq(1)
-			yield from self.bitTime()
-			yield from self.bitTime()
-			yield from self.bitTime()
-			yield spdif.eq(0)
-			yield from self.bitTime()
-			yield spdif.eq(1)
-			yield from self.bitTime()
-			yield spdif.eq(0)
-			yield from self.bitTime()
-			yield from self.bitTime()
-			yield from self.bitTime()
+			yield from self.syncZ()
 			# Encode a couple more bits (pattern 01) to check the lock is maintained
 			yield from self.bmc(data = 0)
 			yield from self.bmc(data = 1)
