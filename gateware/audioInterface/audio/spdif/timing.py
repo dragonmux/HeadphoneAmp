@@ -112,6 +112,7 @@ class Timing(Elaboratable):
 					m.d.usb += shortTimer.eq(shortTimer + 1)
 
 			with m.State('SYNC-Z-SHORT2'):
+				m.d.usb += shortTimer.eq(shortTimer + 1)
 				# If we exceed the previous bit time by more than a couple of counts, more than likely
 				# this was not a Z sync sequence. Abort back to idle.
 				with m.If((shortTimer == (bitTime + 3)) & (dataInPrev == dataInCurr)):
@@ -123,16 +124,33 @@ class Timing(Elaboratable):
 				# a couple of counts of the expected bit time
 				with m.Elif(dataInPrev != dataInCurr):
 					with m.If(shortTimer > (bitTime - 3)):
+						m.d.usb += [
+							longTime.eq(longTimer),
+							longTimer.eq(0),
+							bitTime.eq((bitTime + shortTimer)[1:])
+						]
 						m.next = 'SYNC-Z-FINAL'
 					# If it falls outside range, chances are we got something else like a BMC bit or something
 					# not right, so go back to trying to capture a Z sync sequence
 					with m.Else():
 						m.d.usb += longTimer.eq(0)
 						m.next = 'SYNC-Z-BEGIN'
-				with m.Else():
-					m.d.usb += shortTimer.eq(shortTimer + 1)
 
 			with m.State('SYNC-Z-FINAL'):
+				m.d.usb += longTimer.eq(longTimer + 1)
+				# If we've caught an edge transition, validate the timer is ~= longTime and go to sync'd state
+				with m.If(dataInPrev != dataInCurr):
+					# Validate that the bit time is aproximately the same as the one in longTime
+					with m.If((longTimer > (longTime - 3)) & (longTimer < (longTime + 3))):
+						m.next = 'SUBFRAME'
+					# Otherwise it's fallen outside of the allowed range, so abort back to idle
+					with m.Else():
+						m.next = 'IDLE'
+				# If the timer is about to expire, abort back to idle.
+				with m.Elif(longTimer == 569):
+					m.next = 'IDLE'
+
+			with m.State('SUBFRAME'):
 				pass
 
 		# Synchronise the input S/PDIF signal and time delay it to allow us to detect edges
