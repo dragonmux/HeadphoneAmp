@@ -48,7 +48,13 @@ class TimingTestCase(ToriiTestCase):
 			self.assertEqual((yield self.dut.sync), 1)
 			self.assertEqual((yield self.dut.begin), 0)
 			# Wait till the first sync fail
-			yield from self.step(83)
+			yield from self.step(61)
+			self.assertEqual((yield self.dut.reset), 0)
+			# Check we end back in the IDLE state as a result
+			yield
+			self.assertEqual((yield self.dut.reset), 1)
+			# Fast forward to the second (fail to sync on 'Y' sequence)
+			yield from self.step(211)
 			self.assertEqual((yield self.dut.reset), 0)
 			# Check we end back in the IDLE state as a result
 			yield
@@ -67,6 +73,39 @@ class TimingTestCase(ToriiTestCase):
 			yield from self.bmc(data = 1)
 			yield from self.bmc(data = 0)
 			# Now encode preamble Y to validate the timer logic
+			yield spdif.eq(1)
+			yield from self.bitTime()
+			yield from self.bitTime()
+			yield from self.bitTime()
+			yield spdif.eq(0)
+			yield from self.bitTime()
+			yield from self.bitTime()
+			yield spdif.eq(1)
+			yield from self.bitTime()
+			yield spdif.eq(0)
+			yield from self.bitTime()
+			yield from self.bitTime()
+			# Encode another bit (this time a 1-bit) just in case
+			yield from self.bmc(data = 1)
+			# Now encode preamble Z to validate we get a lock and sync
+			yield spdif.eq(1)
+			yield from self.bitTime()
+			yield from self.bitTime()
+			yield from self.bitTime()
+			yield spdif.eq(0)
+			yield from self.bitTime()
+			yield spdif.eq(1)
+			yield from self.bitTime()
+			yield spdif.eq(0)
+			yield from self.bitTime()
+			yield from self.bitTime()
+			yield from self.bitTime()
+			# Encode a couple more bits (pattern 01) to check the lock is maintained
+			yield from self.bmc(data = 0)
+			yield from self.bmc(data = 1)
+			# Finally, check that the logic times out after sufficient idle time as if the link just got unplugged
+			for _ in range(28):
+				yield from self.bitTime()
 
 		domainSync(self)
 		domainSPDIF(self)
