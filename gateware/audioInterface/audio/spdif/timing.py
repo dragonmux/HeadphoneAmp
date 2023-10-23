@@ -33,8 +33,8 @@ class Timing(Elaboratable):
 		self.spdifIn = Signal()
 
 		self.reset = Signal(reset = 1)
-		self.sync = Signal(reset = 1)
-		self.begin = Signal()
+		self.syncing = Signal(reset = 1)
+		self.frameBegin = Signal()
 		self.channel = Signal()
 		self.bitClock = Signal()
 
@@ -62,6 +62,7 @@ class Timing(Elaboratable):
 			with m.State('IDLE'):
 				m.d.usb += longTimer.eq(0)
 				with m.If(dataInPrev != dataInCurr):
+					m.d.usb += self.syncing.eq(1)
 					m.next = 'SYNC-Z-BEGIN'
 
 			# Start looking for a Z preamble
@@ -142,6 +143,10 @@ class Timing(Elaboratable):
 				with m.If(dataInPrev != dataInCurr):
 					# Validate that the bit time is aproximately the same as the one in longTime
 					with m.If((longTimer > (longTime - 3)) & (longTimer < (longTime + 3))):
+						m.d.usb += [
+							self.syncing.eq(0),
+							self.frameBegin.eq(1),
+						]
 						m.next = 'SUBFRAME'
 					# Otherwise it's fallen outside of the allowed range, so abort back to idle
 					with m.Else():
@@ -151,7 +156,7 @@ class Timing(Elaboratable):
 					m.next = 'IDLE'
 
 			with m.State('SUBFRAME'):
-				pass
+				m.d.usb += self.frameBegin.eq(0)
 
 		# Synchronise the input S/PDIF signal and time delay it to allow us to detect edges
 		m.d.usb += [

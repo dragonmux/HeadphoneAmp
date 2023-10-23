@@ -78,18 +78,18 @@ class TimingTestCase(ToriiTestCase):
 		def domainSync(self : TimingTestCase):
 			# Validate preconditions
 			self.assertEqual((yield self.dut.reset), 1)
-			self.assertEqual((yield self.dut.sync), 1)
-			self.assertEqual((yield self.dut.begin), 0)
+			self.assertEqual((yield self.dut.syncing), 1)
+			self.assertEqual((yield self.dut.frameBegin), 0)
 			# Wait until the first step from the S/PDIF input registers
 			yield from self.step(213)
 			self.assertEqual((yield self.dut.reset), 1)
-			self.assertEqual((yield self.dut.sync), 1)
-			self.assertEqual((yield self.dut.begin), 0)
+			self.assertEqual((yield self.dut.syncing), 1)
+			self.assertEqual((yield self.dut.frameBegin), 0)
 			# Check the reset signal is properly generated
 			yield
 			self.assertEqual((yield self.dut.reset), 0)
-			self.assertEqual((yield self.dut.sync), 1)
-			self.assertEqual((yield self.dut.begin), 0)
+			self.assertEqual((yield self.dut.syncing), 1)
+			self.assertEqual((yield self.dut.frameBegin), 0)
 			# Wait till the first sync fail
 			yield from self.step(61)
 			self.assertEqual((yield self.dut.reset), 0)
