@@ -145,7 +145,7 @@ class TimingTestCase(ToriiTestCase):
 			self.assertEqual((yield self.dut.syncing), 0)
 			self.assertEqual((yield self.dut.frameBegin), 0)
 			# Fast forward to loosing sync again
-			yield from self.step(127)
+			yield from self.step(126)
 			self.assertEqual((yield self.dut.reset), 0)
 			# Check we end back in the IDLE state as a result
 			yield
