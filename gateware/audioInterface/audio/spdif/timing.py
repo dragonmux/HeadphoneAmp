@@ -51,6 +51,8 @@ class Timing(Elaboratable):
 		longTimer = Signal(range(570))
 		shortTimer = Signal(range(190))
 		bitTime = Signal(range(190))
+		bitTimeLow = Signal(range(190))
+		bitTimeHigh = Signal(range(193))
 		longTime = Signal(range(570))
 
 		subBit = Signal(reset = 1)
@@ -164,6 +166,8 @@ class Timing(Elaboratable):
 							frameCount.eq(0),
 							shortTimer.eq(0),
 							timeSinceLastEdge.eq(0),
+							bitTimeLow.eq(bitTime - 3),
+							bitTimeHigh.eq(bitTime + 3),
 						]
 						m.next = 'SUBFRAME'
 					# Otherwise it's fallen outside of the allowed range, so abort back to idle
@@ -178,32 +182,37 @@ class Timing(Elaboratable):
 				# Increment the bit timer
 				m.d.usb += shortTimer.eq(shortTimer + 1)
 				# If we reach the end of a bit time with this
-				with m.If(shortTimer == bitTime):
-					# Mark that we finished a sub-bit and reset the timer
-					m.d.usb += [
-						subBit.eq(~subBit),
-						shortTimer.eq(0),
-					]
-					# If we finished the second in a bit period, advance the bit counter
-					with m.If(subBit):
-						m.d.usb += bitCount.eq(bitCount + 1)
-						# If this would complete the set of bits for the subframe,
-						# transition to looking for the next required sync sequence
-						with m.If(bitCount == 27):
-							m.d.usb += [
-								channel.eq(~channel),
-								self.syncing.eq(1),
-								longTimer.eq(0),
-							]
-							# If we just finished channel A handling, look for 'Y'
-							with m.If(channel == 0):
-								m.next = 'SYNC-Y-BEGIN'
-							# If we just finished frame 191, channel B, look for 'Z'
-							with m.Elif(frameCount == 191):
-								m.next = 'SYNC-Z-BEGIN'
-							# Otherwise this is channel B, so look for 'X'
-							with m.Else():
-								m.next = 'SYNC-X-BEGIN'
+				with m.If(shortTimer > bitTimeLow):
+					# If we get a transition or the bit timer reaches the high watermark
+					with m.If((dataInPrev != dataInCurr) | (shortTimer == bitTimeHigh)):
+						# Mark that we finished a sub-bit and reset the timer
+						m.d.usb += subBit.eq(~subBit)
+						with m.If(shortTimer > bitTime):
+							m.d.usb += shortTimer.eq(shortTimer - bitTime)
+						with m.Else():
+							m.d.usb += shortTimer.eq(0)
+
+						# If we finished the second in a bit period, advance the bit counter
+						with m.If(subBit):
+							m.d.usb += bitCount.eq(bitCount + 1)
+							# If this would complete the set of bits for the subframe,
+							# transition to looking for the next required sync sequence
+							with m.If(bitCount == 27):
+								m.d.usb += [
+									channel.eq(~channel),
+									self.syncing.eq(1),
+									longTimer.eq(0),
+									subBit.eq(1),
+								]
+								# If we just finished channel A handling, look for 'Y'
+								with m.If(channel == 0):
+									m.next = 'SYNC-Y-BEGIN'
+								# If we just finished frame 191, channel B, look for 'Z'
+								with m.Elif(frameCount == 191):
+									m.next = 'SYNC-Z-BEGIN'
+								# Otherwise this is channel B, so look for 'X'
+								with m.Else():
+									m.next = 'SYNC-X-BEGIN'
 
 				# Check for edge transitions
 				with m.If(dataInPrev != dataInCurr):
