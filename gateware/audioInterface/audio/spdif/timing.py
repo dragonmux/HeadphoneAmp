@@ -187,6 +187,23 @@ class Timing(Elaboratable):
 					# If we finished the second in a bit period, advance the bit counter
 					with m.If(subBit):
 						m.d.usb += bitCount.eq(bitCount + 1)
+						# If this would complete the set of bits for the subframe,
+						# transition to looking for the next required sync sequence
+						with m.If(bitCount == 27):
+							m.d.usb += [
+								channel.eq(~channel),
+								self.syncing.eq(1),
+								longTimer.eq(0),
+							]
+							# If we just finished channel A handling, look for 'Y'
+							with m.If(channel == 0):
+								m.next = 'SYNC-Y-BEGIN'
+							# If we just finished frame 191, channel B, look for 'Z'
+							with m.Elif(frameCount == 191):
+								m.next = 'SYNC-Z-BEGIN'
+							# Otherwise this is channel B, so look for 'X'
+							with m.Else():
+								m.next = 'SYNC-X-BEGIN'
 
 				# Check for edge transitions
 				with m.If(dataInPrev != dataInCurr):
@@ -201,6 +218,12 @@ class Timing(Elaboratable):
 						m.next = 'IDLE'
 
 				m.d.usb += self.frameBegin.eq(0)
+
+			with m.State('SYNC-X-BEGIN'):
+				pass
+
+			with m.State('SYNC-Y-BEGIN'):
+				pass
 
 		# Synchronise the input S/PDIF signal and time delay it to allow us to detect edges
 		m.d.usb += [
