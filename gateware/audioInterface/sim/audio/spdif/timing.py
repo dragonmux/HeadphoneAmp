@@ -28,6 +28,27 @@ class TimingTestCase(ToriiTestCase):
 			yield spdif.eq(value)
 		yield from self.bitTime()
 
+	def syncX(self):
+		# Get the current state of the signal
+		spdif = self.dut.spdifIn
+		value = yield spdif
+		# Generate the first transition for the sync sequence, wait 3 time units
+		yield spdif.eq(1 - value)
+		yield from self.bitTime()
+		yield from self.bitTime()
+		yield from self.bitTime()
+		# Generate the second transition and wait another 3 time units
+		yield spdif.eq(value)
+		yield from self.bitTime()
+		yield from self.bitTime()
+		yield from self.bitTime()
+		# Generate the third transition and wait 1 time unit
+		yield spdif.eq(1 - value)
+		yield from self.bitTime()
+		# Generate the final transition and wait 1 last time unit
+		yield spdif.eq(value)
+		yield from self.bitTime()
+
 	def syncY(self):
 		# Get the current state of the signal
 		spdif = self.dut.spdifIn
@@ -44,7 +65,7 @@ class TimingTestCase(ToriiTestCase):
 		# Generate the third transition, waiting 1 time unit
 		yield spdif.eq(1 - value)
 		yield from self.bitTime()
-		# Generate the final transition, waiting 2 more time units.
+		# Generate the final transition, waiting 2 more time units
 		yield spdif.eq(value)
 		yield from self.bitTime()
 		yield from self.bitTime()
@@ -64,7 +85,7 @@ class TimingTestCase(ToriiTestCase):
 		# Generate the third transition, waiting 1 time unit again
 		yield spdif.eq(1 - value)
 		yield from self.bitTime()
-		# Generate the final transition, waiting 3 more time units.
+		# Generate the final transition, waiting 3 more time units
 		yield spdif.eq(value)
 		yield from self.bitTime()
 		yield from self.bitTime()
