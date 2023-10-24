@@ -53,6 +53,7 @@ class Timing(Elaboratable):
 		bitTime = Signal(range(190))
 		bitTimeLow = Signal(range(190))
 		bitTimeHigh = Signal(range(193))
+		mediumTime = Signal(range(380))
 		longTime = Signal(range(570))
 
 		subBit = Signal(reset = 1)
@@ -144,7 +145,8 @@ class Timing(Elaboratable):
 					with m.If(shortTimer > (bitTime - 3)):
 						m.d.usb += [
 							longTimer.eq(0),
-							bitTime.eq((bitTime + shortTimer)[1:])
+							bitTime.eq((bitTime + shortTimer)[1:]),
+							mediumTime.eq(bitTime + shortTimer),
 						]
 						m.next = 'SYNC-Z-FINAL'
 					# If it falls outside range, chances are we got something else like a BMC bit or something
@@ -233,8 +235,55 @@ class Timing(Elaboratable):
 			with m.State('SYNC-X-BEGIN'):
 				pass
 
+			# Start looking for a Y preamble
 			with m.State('SYNC-Y-BEGIN'):
-				pass
+				m.d.usb += longTimer.eq(longTimer + 1)
+				# If we've not had a transition in too long and the timer is about to expire, reset
+				# back to the IDLE state as the link should now be treated as 'idle'
+				with m.If(longTimer > (longTime + 7)):
+					m.next = 'IDLE'
+				with m.Elif(dataInPrev != dataInCurr):
+					m.d.usb += longTimer.eq(0)
+					m.next = 'SYNC-Y-MEDIUM1'
+
+			# Look for the first medium bit period of the sync sequence
+			with m.State('SYNC-Y-MEDIUM1'):
+				m.d.usb += longTimer.eq(longTimer + 1)
+				# If we've not had a transition in too long and the timer is about to expire, reset
+				# back to the IDLE state as the link should now be treated as 'idle'
+				with m.If(longTimer > (mediumTime + 3)):
+					m.next = 'IDLE'
+				with m.Elif(dataInPrev != dataInCurr):
+					m.d.usb += shortTimer.eq(0)
+					m.next = 'SYNC-Y-SHORT'
+
+			# Look for the first short bit period of the sync sequence.
+			with m.State('SYNC-Y-SHORT'):
+				m.d.usb += shortTimer.eq(shortTimer + 1)
+				# If we've not had a transition in too long and the timer is about to expire, reset
+				# back to the IDLE state as the link should now be treated as 'idle'
+				with m.If(shortTimer > (bitTime + 3)):
+					m.next = 'IDLE'
+				with m.Elif(dataInPrev != dataInCurr):
+					m.d.usb += longTimer.eq(0)
+					m.next = 'SYNC-Y-FINAL'
+
+			# Look for the second (and final) short bit period of the sync sequence.
+			with m.State('SYNC-Y-FINAL'):
+				m.d.usb += longTimer.eq(longTimer + 1)
+				# If we've not had a transition in too long and the timer is about to expire, reset
+				# back to the IDLE state as the link should now be treated as 'idle'
+				with m.If(longTimer > (mediumTime + 3)):
+					m.next = 'IDLE'
+				with m.Elif(dataInPrev != dataInCurr):
+					m.d.usb += [
+						self.syncing.eq(0),
+						subBit.eq(0),
+						bitCount.eq(0),
+						shortTimer.eq(0),
+						timeSinceLastEdge.eq(0),
+					]
+					m.next = 'SUBFRAME'
 
 		# Synchronise the input S/PDIF signal and time delay it to allow us to detect edges
 		m.d.usb += [
