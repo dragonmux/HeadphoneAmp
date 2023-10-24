@@ -3,16 +3,19 @@ from torii.build import Platform
 
 from .timing import Timing
 
-class SPDIF(Elaboratable):
-	def __init__(self):
-		self.spdifIn = Signal()
+__all__ = (
+	'SPDIF',
+)
 
+class SPDIF(Elaboratable):
 	def elaborate(self, platform : Platform) -> Module:
 		m = Module()
+		bus = platform.request('spdif', 0)
+
 		m.submodules.timing = timing = Timing()
 
 		m.d.comb += [
-			timing.spdifIn.eq(self.spdifIn),
+			timing.spdifIn.eq(bus.data.i),
 		]
 
 		return m

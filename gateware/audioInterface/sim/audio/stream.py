@@ -1,5 +1,5 @@
 from torii import Elaboratable, Module, Record
-from torii.hdl.rec import DIR_FANOUT
+from torii.hdl.rec import DIR_FANOUT, DIR_FANIN
 from torii.sim import Settle
 from torii.test import ToriiTestCase
 
@@ -7,7 +7,7 @@ from ...audio import AudioStream
 from ...audio.endpoint import AudioEndpoint
 from ...usb.control import AudioRequestHandler
 
-bus = Record(
+i2sBus = Record(
 	layout = (
 		('clk', [
 			('o', 1, DIR_FANOUT),
@@ -24,12 +24,24 @@ bus = Record(
 	)
 )
 
+spdifBus = Record(
+	layout = (
+		('data', [
+			('i', 1, DIR_FANIN),
+		]),
+	)
+)
+
 class Platform:
 	def request(self, name, number, *, xdr = {}):
-		assert name == 'i2s'
-		assert number == 0
-		assert isinstance(xdr, dict)
-		return bus
+		if name == 'i2s':
+			assert number == 0
+			assert isinstance(xdr, dict)
+			return i2sBus
+		elif name == 'spdif':
+			assert number == 0
+			assert isinstance(xdr, dict)
+			return spdifBus
 
 class USBInterface(Elaboratable):
 	def __init__(self):
@@ -64,7 +76,7 @@ class AudioStreamTestCase(ToriiTestCase):
 		for i in range(6):
 			yield
 		yield Settle()
-		(yield bus.data.o) == bit
+		(yield i2sBus.data.o) == bit
 		for i in range(6):
 			yield
 		yield Settle()
@@ -88,33 +100,33 @@ class AudioStreamTestCase(ToriiTestCase):
 			yield Settle()
 			yield
 			yield Settle()
-			assert (yield bus.rnl.o) == 1
+			assert (yield i2sBus.rnl.o) == 1
 			assert (yield audio._needSample) == 0
 			yield
 			yield Settle()
-			assert (yield bus.rnl.o) == 0
+			assert (yield i2sBus.rnl.o) == 0
 			assert (yield audio._needSample) == 0
 			yield from self.readBit(0)
 			yield Settle()
-			assert (yield bus.rnl.o) == 0
+			assert (yield i2sBus.rnl.o) == 0
 			assert (yield audio._needSample) == 1
 			yield from self.readSample(0x0000)
-			assert (yield bus.rnl.o) == 1
+			assert (yield i2sBus.rnl.o) == 1
 			assert (yield audio._needSample) == 0
 			yield from self.readSample(0x0000)
-			assert (yield bus.rnl.o) == 0
+			assert (yield i2sBus.rnl.o) == 0
 			assert (yield audio._needSample) == 1
 			yield from self.readSample(0xDEAD)
-			assert (yield bus.rnl.o) == 1
+			assert (yield i2sBus.rnl.o) == 1
 			assert (yield audio._needSample) == 0
 			yield from self.readSample(0xBEEF)
-			assert (yield bus.rnl.o) == 0
+			assert (yield i2sBus.rnl.o) == 0
 			assert (yield audio._needSample) == 1
 			yield from self.readSample(0x110C)
-			assert (yield bus.rnl.o) == 1
+			assert (yield i2sBus.rnl.o) == 1
 			assert (yield audio._needSample) == 0
 			yield from self.readSample(0xBADA)
-			assert (yield bus.rnl.o) == 0
+			assert (yield i2sBus.rnl.o) == 0
 			assert (yield audio._needSample) == 1
 			yield
 			yield Settle()

@@ -4,6 +4,7 @@ from torii.lib.cdc import FFSynchronizer
 
 from ..usb import USBInterface
 from .i2s import *
+from .spdif import *
 from .endpoint import *
 
 __all__ = (
@@ -23,6 +24,7 @@ class AudioStream(Elaboratable):
 		# m.d.sync is the audio domain.
 		m.submodules.audioFIFO = fifo = AsyncFIFO(width = 48, depth = 256, r_domain = 'sync', w_domain = 'usb')
 		m.submodules.i2s = i2s = I2S()
+		m.submodules.spdif = spdif = SPDIF()
 
 		endpoint = self._endpoint
 		requestHandler = self._requestHandler
