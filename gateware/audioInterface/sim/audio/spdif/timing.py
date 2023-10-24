@@ -178,3 +178,45 @@ class TimingTestCase(ToriiTestCase):
 
 		domainUSB(self)
 		domainSPDIF(self)
+
+	@ToriiTestCase.simulation
+	def testReceiveBlock(self):
+		spdif = self.dut.spdifIn
+
+		@ToriiTestCase.sync_domain(domain = 'usb')
+		def domainUSB(self : TimingTestCase):
+			# Validate preconditions
+			self.assertEqual((yield self.dut.reset), 1)
+			self.assertEqual((yield self.dut.syncing), 1)
+			self.assertEqual((yield self.dut.frameBegin), 0)
+			# Fast forward to the end of the 'Z' sync sequence
+			yield from self.step(191)
+			self.assertEqual((yield self.dut.reset), 0)
+			self.assertEqual((yield self.dut.syncing), 1)
+			self.assertEqual((yield self.dut.frameBegin), 0)
+			# Check that we synchronised to it
+			yield
+			self.assertEqual((yield self.dut.reset), 0)
+			self.assertEqual((yield self.dut.syncing), 0)
+			self.assertEqual((yield self.dut.frameBegin), 1)
+
+		@ToriiTestCase.comb_domain
+		def domainSPDIF(self : TimingTestCase):
+			yield spdif.eq(1)
+			yield from self.bitTime()
+			# Start by encoding preamble Z to begin the frame
+			yield from self.syncZ()
+			# Now start sending samples
+			for sample in range(384):
+				#yield from self.sample24Bit(sample)
+				# Having encoded this sample, determine what the next preamble needs to be
+				if (sample & 1) == 0:
+					yield from self.syncY()
+				elif sample != 383:
+					yield from self.syncX()
+			# Having sent a full frame's worth of samples, go idle to check sync timesout properly
+			for _ in range(4):
+				yield from self.bitTime()
+
+		domainUSB(self)
+		domainSPDIF(self)
