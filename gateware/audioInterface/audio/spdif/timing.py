@@ -123,6 +123,7 @@ class Timing(Elaboratable):
 				with m.Else():
 					m.d.usb += shortTimer.eq(shortTimer + 1)
 
+			# Look for the second short bit period of the sync sequence.
 			with m.State('SYNC-Z-SHORT2'):
 				m.d.usb += shortTimer.eq(shortTimer + 1)
 				# If we exceed the previous bit time by more than a couple of counts, more than likely
@@ -147,6 +148,7 @@ class Timing(Elaboratable):
 						m.d.usb += longTimer.eq(0)
 						m.next = 'SYNC-Z-BEGIN'
 
+			# Look for the second long (and final) bit period of the sync sequence.
 			with m.State('SYNC-Z-FINAL'):
 				m.d.usb += longTimer.eq(longTimer + 1)
 				# If we've caught an edge transition, validate the timer is ~= longTime and go to sync'd state
@@ -171,6 +173,7 @@ class Timing(Elaboratable):
 				with m.Elif(longTimer == 569):
 					m.next = 'IDLE'
 
+			# Handle the timing of the subframe that should now be sent
 			with m.State('SUBFRAME'):
 				# Increment the bit timer
 				m.d.usb += shortTimer.eq(shortTimer + 1)
