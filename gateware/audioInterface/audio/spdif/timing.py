@@ -232,8 +232,55 @@ class Timing(Elaboratable):
 
 				m.d.usb += self.frameBegin.eq(0)
 
+			# Start looking for an X preamble
 			with m.State('SYNC-X-BEGIN'):
-				pass
+				m.d.usb += longTimer.eq(longTimer + 1)
+				# If we've not had a transition in too long and the timer is about to expire, reset
+				# back to the IDLE state as the link should now be treated as 'idle'
+				with m.If(longTimer > (longTime + 7)):
+					m.next = 'IDLE'
+				with m.Elif(dataInPrev != dataInCurr):
+					m.d.usb += longTimer.eq(0)
+					m.next = 'SYNC-X-LONG2'
+
+			# Look for the second long bit period of the sync sequence.
+			with m.State('SYNC-X-LONG2'):
+				m.d.usb += longTimer.eq(longTimer + 1)
+				# If we've not had a transition in too long and the timer is about to expire, reset
+				# back to the IDLE state as the link should now be treated as 'idle'
+				with m.If(longTimer > (longTime + 7)):
+					m.next = 'IDLE'
+				with m.Elif(dataInPrev != dataInCurr):
+					m.d.usb += shortTimer.eq(0)
+					m.next = 'SYNC-X-SHORT1'
+
+			# Look for the first short bit period of the sync sequence.
+			with m.State('SYNC-X-SHORT1'):
+				m.d.usb += shortTimer.eq(shortTimer + 1)
+				# If we've not had a transition in too long and the timer is about to expire, reset
+				# back to the IDLE state as the link should now be treated as 'idle'
+				with m.If(shortTimer > (bitTime + 3)):
+					m.next = 'IDLE'
+				with m.Elif(dataInPrev != dataInCurr):
+					m.d.usb += shortTimer.eq(0)
+					m.next = 'SYNC-X-FINAL'
+
+			# Look for the second (and final) short bit period of the sync sequence.
+			with m.State('SYNC-X-FINAL'):
+				m.d.usb += shortTimer.eq(shortTimer + 1)
+				# If we've not had a transition in too long and the timer is about to expire, reset
+				# back to the IDLE state as the link should now be treated as 'idle'
+				with m.If(shortTimer > (bitTime + 3)):
+					m.next = 'IDLE'
+				with m.Elif(dataInPrev != dataInCurr):
+					m.d.usb += [
+						self.syncing.eq(0),
+						subBit.eq(0),
+						bitCount.eq(0),
+						shortTimer.eq(0),
+						timeSinceLastEdge.eq(0),
+					]
+					m.next = 'SUBFRAME'
 
 			# Start looking for a Y preamble
 			with m.State('SYNC-Y-BEGIN'):
