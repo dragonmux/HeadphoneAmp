@@ -53,7 +53,8 @@ class Timing(Elaboratable):
 		bitTime = Signal(range(190))
 		longTime = Signal(range(570))
 
-		subBit = Signal()
+		subBit = Signal(reset = 1)
+		subBitDelayed = Signal(reset = 1)
 		bitCount = Signal(range(28))
 		frameCount = Signal(range(192))
 		timeSinceLastEdge = Signal(range(570))
@@ -62,6 +63,7 @@ class Timing(Elaboratable):
 		with m.FSM(domain = 'usb') as syncFSM:
 			m.d.comb += [
 				self.reset.eq(syncFSM.ongoing('IDLE')),
+				self.bitClock.eq(syncFSM.ongoing('SUBFRAME') & (subBit != subBitDelayed)),
 			]
 
 			# In this state we are only looking for a transition on spdifIn (look for the channel to become active).
@@ -79,7 +81,10 @@ class Timing(Elaboratable):
 				with m.If(longTimer == 569):
 					m.next = 'IDLE'
 				with m.Elif(dataInPrev != dataInCurr):
-					m.d.usb += shortTimer.eq(0)
+					m.d.usb += [
+						shortTimer.eq(0),
+						longTime.eq(longTimer),
+					]
 					m.next = 'SYNC-Z-SHORT1'
 
 			# Look for the first short bit period of the sync sequence.
@@ -132,7 +137,6 @@ class Timing(Elaboratable):
 				with m.Elif(dataInPrev != dataInCurr):
 					with m.If(shortTimer > (bitTime - 3)):
 						m.d.usb += [
-							longTime.eq(longTimer),
 							longTimer.eq(0),
 							bitTime.eq((bitTime + shortTimer)[1:])
 						]
@@ -199,5 +203,6 @@ class Timing(Elaboratable):
 		m.d.usb += [
 			dataInCurr.eq(self.spdifIn),
 			dataInPrev.eq(dataInCurr),
+			subBitDelayed.eq(subBit),
 		]
 		return m
