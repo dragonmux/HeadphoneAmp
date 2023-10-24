@@ -1,6 +1,5 @@
-from ast import Del
 import logging
-from torii import Record
+from torii import Const, Cat
 from torii.hdl.rec import DIR_FANOUT
 from torii.sim import Settle, Delay
 from torii.test import ToriiTestCase
@@ -90,6 +89,25 @@ class TimingTestCase(ToriiTestCase):
 		yield from self.bitTime()
 		yield from self.bitTime()
 		yield from self.bitTime()
+
+	def sample16Bit(self, sample : int):
+		# Convert the sample to 24-bit by padding to the right with 0's
+		data = sample << 8
+		# For each of the 24 bits, emit the Biphase Mark Coded version of the bit
+		for bit in range(24):
+			yield from self.bmc(data = (data >> bit) & 1)
+		# Now emit the 4 status bits - V = 1 as this is a valid audio sample
+		yield from self.bmc(data = 1)
+		# U = 0 as we don't care about the user data so fill this 192 bit channel with 0's
+		yield from self.bmc(data = 0)
+		# C = 0 as we aren't filling the channel status data at this point, so let it be 0's
+		yield from self.bmc(data = 0)
+		# P = ~Cat(data, 1, 0, 0).xor() as the parity value is for even parity, xor calculates odd.
+		parityData = (data << 3) | 0b100
+		parity = 0
+		for bit in range(27):
+			parity ^= (parityData >> bit) & 1
+		yield from self.bmc(data = 1 - parity)
 
 	@ToriiTestCase.simulation
 	def testSyncZ(self):
@@ -208,7 +226,7 @@ class TimingTestCase(ToriiTestCase):
 			yield from self.syncZ()
 			# Now start sending samples
 			for sample in range(384):
-				#yield from self.sample24Bit(sample)
+				yield from self.sample16Bit(sample)
 				# Having encoded this sample, determine what the next preamble needs to be
 				if (sample & 1) == 0:
 					yield from self.syncY()
