@@ -72,7 +72,10 @@ class Timing(Elaboratable):
 			with m.State('IDLE'):
 				m.d.usb += longTimer.eq(0)
 				with m.If(dataInPrev != dataInCurr):
-					m.d.usb += self.syncing.eq(1)
+					m.d.usb += [
+						self.syncing.eq(1),
+						channel.eq(0),
+					]
 					m.next = 'SYNC-Z-BEGIN'
 
 			# Start looking for a Z preamble
@@ -160,7 +163,6 @@ class Timing(Elaboratable):
 						m.d.usb += [
 							self.syncing.eq(0),
 							self.frameBegin.eq(1),
-							channel.eq(0),
 							subBit.eq(0),
 							bitCount.eq(0),
 							frameCount.eq(0),
