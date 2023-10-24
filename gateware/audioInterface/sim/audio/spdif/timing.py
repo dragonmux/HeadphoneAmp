@@ -96,7 +96,7 @@ class TimingTestCase(ToriiTestCase):
 		spdif = self.dut.spdifIn
 
 		@ToriiTestCase.sync_domain(domain = 'usb')
-		def domainSync(self : TimingTestCase):
+		def domainUSB(self : TimingTestCase):
 			# Validate preconditions
 			self.assertEqual((yield self.dut.reset), 1)
 			self.assertEqual((yield self.dut.syncing), 1)
@@ -176,5 +176,5 @@ class TimingTestCase(ToriiTestCase):
 			for _ in range(4):
 				yield from self.bitTime()
 
-		domainSync(self)
+		domainUSB(self)
 		domainSPDIF(self)
