@@ -302,19 +302,19 @@ class TimingTestCase(ToriiTestCase):
 
 			# Asset through the rest of the frames in the block
 			for _ in range(190):
-				yield from self.wait_until_high(self.dut.syncing)
+				yield from self.wait_until_high(self.dut.syncing, timeout = 1250)
 				self.assertEqual((yield self.dut.reset), 0)
 				self.assertEqual((yield self.dut.blockBegin), 0)
 				self.assertEqual((yield self.dut.frameBegin), 0)
-				yield from self.wait_until_low(self.dut.syncing)
+				yield from self.wait_until_low(self.dut.syncing, timeout = 250)
 				self.assertEqual((yield self.dut.reset), 0)
 				self.assertEqual((yield self.dut.blockBegin), 0)
 				self.assertEqual((yield self.dut.frameBegin), 1)
-				yield from self.wait_until_high(self.dut.syncing)
+				yield from self.wait_until_high(self.dut.syncing, timeout = 1250)
 				self.assertEqual((yield self.dut.reset), 0)
 				self.assertEqual((yield self.dut.blockBegin), 0)
 				self.assertEqual((yield self.dut.frameBegin), 0)
-				yield from self.wait_until_low(self.dut.syncing)
+				yield from self.wait_until_low(self.dut.syncing, timeout = 250)
 				self.assertEqual((yield self.dut.reset), 0)
 				self.assertEqual((yield self.dut.blockBegin), 0)
 				self.assertEqual((yield self.dut.frameBegin), 0)
