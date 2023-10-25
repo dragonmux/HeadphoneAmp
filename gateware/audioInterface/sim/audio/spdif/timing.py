@@ -319,6 +319,34 @@ class TimingTestCase(ToriiTestCase):
 				self.assertEqual((yield self.dut.blockBegin), 0)
 				self.assertEqual((yield self.dut.frameBegin), 0)
 
+			# -- Frame 192, channel B
+			# Check the bit clock is working
+			self.assertEqual((yield self.dut.bitClock), 1)
+			yield
+			self.assertEqual((yield self.dut.bitClock), 0)
+			yield from self.wait_until_high(self.dut.bitClock, timeout = 25)
+			yield
+			self.assertEqual((yield self.dut.bitClock), 0)
+			yield from self.wait_until_high(self.dut.bitClock, timeout = 20)
+			yield
+			self.assertEqual((yield self.dut.bitClock), 0)
+			yield from self.wait_until_high(self.dut.bitClock, timeout = 25)
+			yield
+			self.assertEqual((yield self.dut.bitClock), 0)
+			yield from self.wait_until_high(self.dut.bitClock, timeout = 20)
+			yield
+			self.assertEqual((yield self.dut.bitClock), 0)
+
+			# After the first couple of cycles of the bit clock, fast forward to 'Z' sync begin
+			yield from self.wait_until_high(self.dut.syncing, timeout = 1150)
+			self.assertEqual((yield self.dut.reset), 0)
+			self.assertEqual((yield self.dut.blockBegin), 0)
+			self.assertEqual((yield self.dut.frameBegin), 0)
+
+			# Wait for sync to time out
+			yield from self.wait_until_high(self.dut.reset, timeout = 600)
+			self.assertEqual((yield self.dut.syncing), 1)
+
 		@ToriiTestCase.comb_domain
 		def domainSPDIF(self : TimingTestCase):
 			yield spdif.eq(1)
@@ -334,7 +362,7 @@ class TimingTestCase(ToriiTestCase):
 				elif sample != 383:
 					yield from self.syncX()
 			# Having sent a full frame's worth of samples, go idle to check sync timesout properly
-			for _ in range(4):
+			for _ in range(28):
 				yield from self.bitTime()
 
 		domainUSB(self)
