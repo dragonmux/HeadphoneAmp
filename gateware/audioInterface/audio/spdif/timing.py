@@ -34,6 +34,7 @@ class Timing(Elaboratable):
 
 		self.reset = Signal(reset = 1)
 		self.syncing = Signal(reset = 1)
+		self.blockBegin = Signal()
 		self.frameBegin = Signal()
 		self.channel = Signal()
 		self.bitClock = Signal()
@@ -164,6 +165,7 @@ class Timing(Elaboratable):
 					with m.If((longTimer > (longTime - 3)) & (longTimer < (longTime + 3))):
 						m.d.usb += [
 							self.syncing.eq(0),
+							self.blockBegin.eq(1),
 							self.frameBegin.eq(1),
 							subBit.eq(0),
 							bitCount.eq(0),
@@ -230,7 +232,10 @@ class Timing(Elaboratable):
 					with m.If(timeSinceLastEdge > longTime):
 						m.next = 'IDLE'
 
-				m.d.usb += self.frameBegin.eq(0)
+				m.d.usb += [
+					self.blockBegin.eq(0),
+					self.frameBegin.eq(0),
+				]
 
 			# Start looking for an X preamble
 			with m.State('SYNC-X-BEGIN'):
@@ -275,6 +280,7 @@ class Timing(Elaboratable):
 				with m.Elif(dataInPrev != dataInCurr):
 					m.d.usb += [
 						self.syncing.eq(0),
+						self.frameBegin.eq(1),
 						subBit.eq(0),
 						bitCount.eq(0),
 						shortTimer.eq(0),

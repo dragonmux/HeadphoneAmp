@@ -118,17 +118,17 @@ class TimingTestCase(ToriiTestCase):
 			# Validate preconditions
 			self.assertEqual((yield self.dut.reset), 1)
 			self.assertEqual((yield self.dut.syncing), 1)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockBegin), 0)
 			# Wait until the first step from the S/PDIF input registers
 			yield from self.step(213)
 			self.assertEqual((yield self.dut.reset), 1)
 			self.assertEqual((yield self.dut.syncing), 1)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockBegin), 0)
 			# Check the reset signal is properly generated
 			yield
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 1)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockBegin), 0)
 			# Wait till the first sync fail
 			yield from self.step(61)
 			self.assertEqual((yield self.dut.reset), 0)
@@ -151,17 +151,17 @@ class TimingTestCase(ToriiTestCase):
 			yield from self.step(189)
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 1)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockBegin), 0)
 			# Check that we synchronised to it
 			yield
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 0)
-			self.assertEqual((yield self.dut.frameBegin), 1)
+			self.assertEqual((yield self.dut.blockBegin), 1)
 			# Then check that the frame block begin signal goes low
 			yield
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockBegin), 0)
 			# Fast forward to loosing sync again
 			yield from self.step(126)
 			self.assertEqual((yield self.dut.reset), 0)
@@ -206,16 +206,19 @@ class TimingTestCase(ToriiTestCase):
 			# Validate preconditions
 			self.assertEqual((yield self.dut.reset), 1)
 			self.assertEqual((yield self.dut.syncing), 1)
+			self.assertEqual((yield self.dut.blockBegin), 0)
 			self.assertEqual((yield self.dut.frameBegin), 0)
 			# Fast forward to the end of the 'Z' sync sequence
 			yield from self.step(191)
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 1)
+			self.assertEqual((yield self.dut.blockBegin), 0)
 			self.assertEqual((yield self.dut.frameBegin), 0)
 			# Check that we synchronised to it
 			yield
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 0)
+			self.assertEqual((yield self.dut.blockBegin), 1)
 			self.assertEqual((yield self.dut.frameBegin), 1)
 
 		@ToriiTestCase.comb_domain
