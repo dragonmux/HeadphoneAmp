@@ -4,7 +4,7 @@ from torii.build import Platform
 class BMCDecoder(Elaboratable):
 	'''
 	This implements Biphase-Mark Coding (BMC, aka Differential Manchester) decoding.
-	It decodes and collates 28 bits from the input and pulses dataReady when complete,
+	It decodes and collates 28 bits from the input and pulses dataAvailable when complete,
 	resetting state ready for the next 28 bits.
 	The reset signal cleans internal state and puts things back into the initial state.
 	'''
@@ -14,7 +14,7 @@ class BMCDecoder(Elaboratable):
 		self.bitClock = Signal()
 
 		self.dataOut = Signal(28)
-		self.dataReady = Signal()
+		self.dataAvailable = Signal()
 
 	def elaborate(self, platform : Platform) -> Module:
 		m = Module()
@@ -24,7 +24,7 @@ class BMCDecoder(Elaboratable):
 		bitClock = self.bitClock
 
 		dataOut = self.dataOut
-		dataReady = self.dataReady
+		dataAvailable = self.dataAvailable
 
 		firstHalf = Signal()
 		counter = Signal(range(28))
@@ -33,10 +33,10 @@ class BMCDecoder(Elaboratable):
 		with m.FSM(domain = 'usb'):
 			# Wait for a pulse on bitClock signaling the start of a sequence
 			with m.State('BEGIN'):
-				# Continually reset the bit counter and data ready state
+				# Continually reset the bit counter and data available state
 				m.d.usb += [
 					counter.eq(0),
-					dataReady.eq(0),
+					dataAvailable.eq(0),
 				]
 				# Once we've got that clock pulse, grab the input data state and store it
 				# then switch to looking for the end of the bit
@@ -78,10 +78,10 @@ class BMCDecoder(Elaboratable):
 			# Handle closing steps for a sequence and reset state ready for the next
 			with m.State('END'):
 				# With all 28 bits in a sequence captured, make the data available from the shift register
-				# and pulse the ready line to indicate the data's available now
+				# and pulse the available line to indicate there's data now
 				m.d.usb += [
 					dataOut.eq(bits),
-					dataReady.eq(1),
+					dataAvailable.eq(1),
 				]
 				m.next = 'BEGIN'
 
