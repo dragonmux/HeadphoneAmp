@@ -210,6 +210,10 @@ class Timing(Elaboratable):
 									longTimer.eq(0),
 									subBit.eq(1),
 								]
+								# If we just finished a frame, increment the frame counter
+								with m.If(channel == 1):
+									m.d.usb += frameCount.eq(frameCount + 1)
+
 								# If we just finished channel A handling, look for 'Y'
 								with m.If(channel == 0):
 									m.next = 'SYNC-Y-BEGIN'
