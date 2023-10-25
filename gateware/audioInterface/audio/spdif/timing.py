@@ -244,9 +244,16 @@ class Timing(Elaboratable):
 				# back to the IDLE state as the link should now be treated as 'idle'
 				with m.If(longTimer > (longTime + 7)):
 					m.next = 'IDLE'
+				# We got something that should be the starting long bit, so let's check the timing is with
+				# a couple of counts of the expected bit time
 				with m.Elif(dataInPrev != dataInCurr):
-					m.d.usb += longTimer.eq(0)
-					m.next = 'SYNC-X-LONG2'
+					# If it falls short, abort back to IDLE as we've clearly lost sync
+					with m.If(longTimer < (longTime - 7)):
+						m.next = 'IDLE'
+					# Otherwise start looking for the second long length bit period for the sync pattern
+					with m.Else():
+						m.d.usb += longTimer.eq(0)
+						m.next = 'SYNC-X-LONG2'
 
 			# Look for the second long bit period of the sync sequence.
 			with m.State('SYNC-X-LONG2'):
@@ -255,9 +262,16 @@ class Timing(Elaboratable):
 				# back to the IDLE state as the link should now be treated as 'idle'
 				with m.If(longTimer > (longTime + 7)):
 					m.next = 'IDLE'
+				# We got something that should be the second long bit, so let's check the timing is with
+				# a couple of counts of the expected bit time
 				with m.Elif(dataInPrev != dataInCurr):
-					m.d.usb += shortTimer.eq(0)
-					m.next = 'SYNC-X-SHORT1'
+					# If it falls short, abort back to IDLE as we've clearly lost sync
+					with m.If(longTimer < (longTime - 7)):
+						m.next = 'IDLE'
+					# Otherwise start looking for the first short length bit period for the sync pattern
+					with m.Else():
+						m.d.usb += shortTimer.eq(0)
+						m.next = 'SYNC-X-SHORT1'
 
 			# Look for the first short bit period of the sync sequence.
 			with m.State('SYNC-X-SHORT1'):
@@ -266,9 +280,16 @@ class Timing(Elaboratable):
 				# back to the IDLE state as the link should now be treated as 'idle'
 				with m.If(shortTimer > (bitTime + 3)):
 					m.next = 'IDLE'
+				# We got something that should be the first short bit, so let's check the timing is with
+				# a couple of counts of the expected bit time
 				with m.Elif(dataInPrev != dataInCurr):
-					m.d.usb += shortTimer.eq(0)
-					m.next = 'SYNC-X-FINAL'
+					# If it falls short, abort back to IDLE as we've clearly lost sync
+					with m.If(shortTimer < (bitTime - 3)):
+						m.next = 'IDLE'
+					# Otherwise start looking for the second (and final) short length bit period for the sync pattern
+					with m.Else():
+						m.d.usb += shortTimer.eq(0)
+						m.next = 'SYNC-X-FINAL'
 
 			# Look for the second (and final) short bit period of the sync sequence.
 			with m.State('SYNC-X-FINAL'):
@@ -277,16 +298,23 @@ class Timing(Elaboratable):
 				# back to the IDLE state as the link should now be treated as 'idle'
 				with m.If(shortTimer > (bitTime + 3)):
 					m.next = 'IDLE'
+				# We got something that should be the final bit, so let's check the timing is with
+				# a couple of counts of the expected bit time
 				with m.Elif(dataInPrev != dataInCurr):
-					m.d.usb += [
-						self.syncing.eq(0),
-						self.frameBegin.eq(1),
-						subBit.eq(0),
-						bitCount.eq(0),
-						shortTimer.eq(0),
-						timeSinceLastEdge.eq(0),
-					]
-					m.next = 'SUBFRAME'
+					# If it falls short, abort back to IDLE as we've clearly lost sync
+					with m.If(shortTimer < (bitTime - 3)):
+						m.next = 'IDLE'
+					# We successfully synchronised again with the 'X' sequence, so continue onto the next subframe
+					with m.Else():
+						m.d.usb += [
+							self.syncing.eq(0),
+							self.frameBegin.eq(1),
+							subBit.eq(0),
+							bitCount.eq(0),
+							shortTimer.eq(0),
+							timeSinceLastEdge.eq(0),
+						]
+						m.next = 'SUBFRAME'
 
 			# Start looking for a Y preamble
 			with m.State('SYNC-Y-BEGIN'):
