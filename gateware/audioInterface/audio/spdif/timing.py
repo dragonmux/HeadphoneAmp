@@ -27,6 +27,9 @@ class Timing(Elaboratable):
 
 	We treat the 'Z' sequence the same as the 'X' sequence for generating the channel signal.
 	sync sequence 'Z' is also known as sequence 'B', 'X' as 'M' and 'Y' as 'W'.
+
+	The data signal is the resynchronised S/PDIF data stream from spdifIn, run through
+	buffering to bring it onto the USB clock domain as glitch free as possible.
 	'''
 
 	def __init__(self):
@@ -38,6 +41,7 @@ class Timing(Elaboratable):
 		self.frameBegin = Signal()
 		self.channel = Signal()
 		self.bitClock = Signal()
+		self.data = Signal()
 
 	def elaborate(self, platform : Platform) -> Module:
 		m = Module()
@@ -402,6 +406,7 @@ class Timing(Elaboratable):
 		m.d.usb += [
 			dataInCurr.eq(self.spdifIn),
 			dataInPrev.eq(dataInCurr),
+			self.data.eq(dataInCurr),
 			subBitDelayed.eq(subBit),
 		]
 		return m
