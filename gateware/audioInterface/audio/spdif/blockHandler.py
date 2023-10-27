@@ -27,7 +27,7 @@ class BlockHandler(Elaboratable):
 
 		self.blockValid = Signal()
 		self.droppingData = Signal()
-		self.dataOut = Signal()
+		self.dataOut = Signal(24)
 		self.dataValid = Signal()
 		self.bitDepth = Signal(range(24))
 		self.sampleRate = Signal(range(192000))
@@ -63,6 +63,7 @@ class BlockHandler(Elaboratable):
 		discardSamplesB = Signal(range(192))
 		transferSamples = Signal(range(192))
 		transferChannel = Signal()
+		sample = Signal(24)
 		bitDepth = Signal(range(24))
 		sampleRate = Signal(range(192000))
 		channelAType = Signal(Channel)
@@ -269,8 +270,15 @@ class BlockHandler(Elaboratable):
 
 		# Connect an approriate channel through to the data output based on the transfer channel value
 		with m.If(transferChannel):
-			m.d.comb += dataOut.eq(channelB.r_data)
+			m.d.comb += sample.eq(channelB.r_data)
 		with m.Else():
-			m.d.comb += dataOut.eq(channelA.r_data)
+			m.d.comb += sample.eq(channelA.r_data)
+
+		# If we're outputting 16-bit data, undo the left alignment S/PDIF does
+		with m.If(bitDepth == 16):
+			m.d.comb += dataOut.eq(sample.shift_right(8))
+		# Otherwise it's 24-bit data, so pass it straight through unchanged
+		with m.Else():
+			m.d.comb += dataOut.eq(sample)
 
 		return m
