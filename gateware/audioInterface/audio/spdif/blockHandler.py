@@ -47,7 +47,7 @@ class BlockHandler(Elaboratable):
 		transferSamplesA = Signal(range(192))
 		transferSamplesB = Signal(range(192))
 		bitDepth = Signal(range(24))
-		sampleRate = Signal(range(48000))
+		sampleRate = Signal(range(192000))
 
 		channelA : SyncFIFO = DomainRenamer({'sync': 'usb'})(SyncFIFO(width = 24, depth = 192, fwft = False))
 		channelB : SyncFIFO = DomainRenamer({'sync': 'usb'})(SyncFIFO(width = 24, depth = 192, fwft = False))
@@ -137,9 +137,13 @@ class BlockHandler(Elaboratable):
 							m.d.usb += sampleRate.eq(44100)
 						with m.Case('0100'):
 							m.d.usb += sampleRate.eq(48000)
+						with m.Case('0101'):
+							m.d.usb += sampleRate.eq(96000)
+						with m.Case('0111'):
+							m.d.usb += sampleRate.eq(192000)
 						with m.Case('1100'):
 							m.d.usb += sampleRate.eq(32000)
-						# If it's not one of the 3 valid sample rates, signal it's invalid
+						# If it's not one of the valid sample rates, signal it's invalid
 						with m.Default():
 							m.d.comb += sampleRateInvalid.eq(1)
 
