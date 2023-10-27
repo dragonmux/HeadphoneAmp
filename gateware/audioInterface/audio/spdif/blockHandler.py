@@ -39,9 +39,14 @@ class BlockHandler(Elaboratable):
 		samplesB = Signal(range(192))
 		controlBits = Signal(192)
 
+		bitDepthInvalid = Signal()
+		sampleRateInvalid = Signal()
+
 		dropData = Signal()
 		transferSamplesA = Signal(range(192))
 		transferSamplesB = Signal(range(192))
+		bitDepth = Signal(range(24))
+		sampleRate = Signal(range(48000))
 
 		channelA : SyncFIFO = DomainRenamer({'sync': 'usb'})(SyncFIFO(width = 24, depth = 192, fwft = False))
 		channelB : SyncFIFO = DomainRenamer({'sync': 'usb'})(SyncFIFO(width = 24, depth = 192, fwft = False))
@@ -59,6 +64,8 @@ class BlockHandler(Elaboratable):
 			channelB.w_en.eq(0),
 			channelB.r_en.eq(0),
 			dropData.eq(0),
+			bitDepthInvalid.eq(0),
+			sampleRateInvalid.eq(0),
 		]
 
 		with m.FSM(domain = 'usb', name = 'blockFSM'):
@@ -104,8 +111,38 @@ class BlockHandler(Elaboratable):
 
 			# Check that we have a S/PDIF control frame and move settings about as needed
 			with m.State('VALIDATE-CONTROL'):
-				pass
+				# If the first control bit indicates this is an AES3 frame, immediately go to discarding the data.
+				# Likewise if this is compressed or 4-channel PCM data.
+				with m.If(controlBits[0] | controlBits[1] | controlBits[3]):
+					m.next = 'ABORT'
+				# Otherwise copy the sample rate out
+				with m.Else():
+					# Decode the sample bit depth
+					with m.Switch(controlBits[32:35]):
+						# 24-bit words, full word length
+						with m.Case('1101'):
+							m.d.usb += bitDepth.eq(24)
+						# 20-bit words, minus 4 bits
+						with m.Case('0100'):
+							m.d.usb += bitDepth.eq(16)
+						# Not one of these two? Don't support it so signal invalid
+						with m.Default():
+							m.d.comb += bitDepthInvalid.eq(1)
 
+					# Decode the sample rate
+					with m.Switch(controlBits[24:27]):
+						with m.Case('0000'):
+							m.d.usb += sampleRate.eq(44100)
+						with m.Case('0100'):
+							m.d.usb += sampleRate.eq(48000)
+						with m.Case('1100'):
+							m.d.usb += sampleRate.eq(32000)
+						# If it's not one of the 3 valid sample rates, signal it's invalid
+						with m.Default():
+							m.d.comb += sampleRateInvalid.eq(1)
+
+					with m.If(bitDepthInvalid | sampleRateInvalid):
+						m.next = 'ABORT'
 			# Buffering of the block has been aborted, either by a parity error or by an abort
 			# from the timing system. Tell the transfer FSM what to do and go back to waiting
 			with m.State('ABORT'):
