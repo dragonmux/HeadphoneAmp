@@ -240,9 +240,9 @@ class BlockHandler(Elaboratable):
 			with m.State('XFER-DATA-L'):
 				# Should we pull data from buffer B first? If true, we should
 				with m.If(transferChannel):
-					m.d.comb == channelB.r_en.eq(1)
+					m.d.comb += channelB.r_en.eq(1)
 				with m.Else():
-					m.d.comb == channelA.r_en.eq(1)
+					m.d.comb += channelA.r_en.eq(1)
 				# Flip the channel used ready for the right data, mark that we're consuming this sample
 				# (computed as above with manual subtract-with-borrow for speed
 				m.d.usb += [
@@ -255,9 +255,9 @@ class BlockHandler(Elaboratable):
 			with m.State('XFER-DATA-R'):
 				# Should we pull data from buffer B first? If true, we should
 				with m.If(transferChannel):
-					m.d.comb == channelB.r_en.eq(1)
+					m.d.comb += channelB.r_en.eq(1)
 				with m.Else():
-					m.d.comb == channelA.r_en.eq(1)
+					m.d.comb += channelA.r_en.eq(1)
 				# Flip the channel used back and check if we've consumed all the samples to transfer
 				m.d.usb  += transferChannel.eq(~transferChannel)
 				m.d.comb += dataValid.eq(1)
