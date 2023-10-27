@@ -3,6 +3,7 @@ from torii.build import Platform
 
 from .timing import Timing
 from .biphaseDecode import BMCDecoder
+from .blockHandler import BlockHandler
 
 __all__ = (
 	'SPDIF',
@@ -17,6 +18,7 @@ class SPDIF(Elaboratable):
 		# Instantiate all the modules that comprise this S/PDIF decoder
 		m.submodules.timing = timing = Timing()
 		m.submodules.bmcDecoder = bmcDecoder = BMCDecoder()
+		m.submodules.blockHandler = blockHandler = BlockHandler()
 
 		# Wire them all up to create the completed decoder block
 		m.d.comb += [
@@ -29,6 +31,16 @@ class SPDIF(Elaboratable):
 			bmcDecoder.reset.eq(timing.reset),
 			bmcDecoder.dataIn.eq(timing.data),
 			bmcDecoder.bitClock.eq(timing.bitClock),
+
+			# Finally, the remaining timing signals and the decoded data go
+			# into the block handler where they're buffered and the completed
+			# blocks are validated and queued to the I²S sample playback engine
+			blockHandler.channel.eq(timing.channel),
+			blockHandler.dataIn.eq(bmcDecoder.dataOut),
+			blockHandler.dataAvailable.eq(bmcDecoder.dataAvailable),
+			blockHandler.blockBeginning.eq(timing.blockBegin),
+			blockHandler.blockComplete.eq(timing.blockEnd),
+			blockHandler.dropBlock.eq(timing.reset),
 		]
 
 		return m
