@@ -23,6 +23,13 @@ class BlockHandlerTestCase(ToriiTestCase):
 		blockComplete = self.dut.blockComplete
 		dropBlock = self.dut.dropBlock
 
+		blockValid = self.dut.blockValid
+		droppingData = self.dut.droppingData
+		dataOut = self.dut.dataOut
+		dataValid = self.dut.dataValid
+		bitDepth = self.dut.bitDepth
+		sampleRate = self.dut.sampleRate
+
 		channelStatusBytes = [
 			# S/PDIF, PCM audio, mode 0
 			0b00000000,
@@ -59,7 +66,21 @@ class BlockHandlerTestCase(ToriiTestCase):
 			yield channel.eq(1)
 			yield from self.pulse_pos(dataAvailable)
 		yield from self.pulse_pos(blockComplete)
-		yield from self.step(192)
+		self.assertEqual((yield blockValid), 0)
+		yield
+		self.assertEqual((yield blockValid), 1)
+		self.assertEqual((yield dataValid), 0)
+		yield
+		self.assertEqual((yield bitDepth), 16)
+		self.assertEqual((yield sampleRate), 48000)
+		for sample in range(192):
+			self.assertEqual((yield dataValid), 1)
+			self.assertEqual((yield dataOut), 0xca00 | sample)
+			yield
+			self.assertEqual((yield dataValid), 1)
+			self.assertEqual((yield dataOut), 0xcb00 | sample)
+			yield
+		self.assertEqual((yield dataValid), 0)
 		yield
 
 # 0x1f00d00
