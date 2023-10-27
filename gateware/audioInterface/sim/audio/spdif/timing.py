@@ -204,7 +204,7 @@ class TimingTestCase(ToriiTestCase):
 			self.assertEqual((yield self.dut.reset), 1)
 			self.assertEqual((yield self.dut.syncing), 1)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 
 			# -- Frame 0
 			# Fast forward to the end of the 'Z' sync sequence
@@ -212,38 +212,38 @@ class TimingTestCase(ToriiTestCase):
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 1)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 			# Check that we synchronised to it
 			yield
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 0)
 			self.assertEqual((yield self.dut.blockBegin), 1)
-			self.assertEqual((yield self.dut.frameBegin), 1)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 			# We don't care about the channel or bit clock signals here, so instead lets
 			# fast forward onto the next sync sequence ('Y') and check that works
 			yield from self.step(1189)
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 0)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 			# Check that we correctly detected it
 			yield
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 1)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 			# Fast forward to the end of the 'Y' sync sequence
 			yield from self.step(168)
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 1)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 			# Check that we synchronised to it
 			yield
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 0)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 
 			# -- Frame 1
 			# We don't care about the channel or bit clock signals here, so instead lets
@@ -252,69 +252,69 @@ class TimingTestCase(ToriiTestCase):
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 0)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 			# Check that we correctly detected it
 			yield
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 1)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 			# Fast forward to the end of the 'Y' sync sequence
 			yield from self.step(169)
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 1)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 			# Check that we synchronised to it
 			yield
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 0)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 1)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 			# We don't care about the channel or bit clock signals here, so instead lets
 			# fast forward onto the next sync sequence ('Y') and check that works
 			yield from self.step(1188)
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 0)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 			# Check that we correctly detected it
 			yield
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 1)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 			# Fast forward to the end of the 'Y' sync sequence
 			yield from self.step(168)
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 1)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 			# Check that we synchronised to it
 			yield
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.syncing), 0)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 
 			# Asset through the rest of the frames in the block
 			for _ in range(190):
 				yield from self.wait_until_high(self.dut.syncing, timeout = 1250)
 				self.assertEqual((yield self.dut.reset), 0)
 				self.assertEqual((yield self.dut.blockBegin), 0)
-				self.assertEqual((yield self.dut.frameBegin), 0)
+				self.assertEqual((yield self.dut.blockEnd), 0)
 				yield from self.wait_until_low(self.dut.syncing, timeout = 250)
 				self.assertEqual((yield self.dut.reset), 0)
 				self.assertEqual((yield self.dut.blockBegin), 0)
-				self.assertEqual((yield self.dut.frameBegin), 1)
+				self.assertEqual((yield self.dut.blockEnd), 0)
 				yield from self.wait_until_high(self.dut.syncing, timeout = 1250)
 				self.assertEqual((yield self.dut.reset), 0)
 				self.assertEqual((yield self.dut.blockBegin), 0)
-				self.assertEqual((yield self.dut.frameBegin), 0)
+				self.assertEqual((yield self.dut.blockEnd), 0)
 				yield from self.wait_until_low(self.dut.syncing, timeout = 250)
 				self.assertEqual((yield self.dut.reset), 0)
 				self.assertEqual((yield self.dut.blockBegin), 0)
-				self.assertEqual((yield self.dut.frameBegin), 0)
+				self.assertEqual((yield self.dut.blockEnd), 0)
 
 			# -- Frame 192, channel B
 			# Check the bit clock is working
@@ -338,7 +338,13 @@ class TimingTestCase(ToriiTestCase):
 			yield from self.wait_until_high(self.dut.syncing, timeout = 1150)
 			self.assertEqual((yield self.dut.reset), 0)
 			self.assertEqual((yield self.dut.blockBegin), 0)
-			self.assertEqual((yield self.dut.frameBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 1)
+			# Check that blockEnd clears when it should
+			yield
+			self.assertEqual((yield self.dut.syncing), 1)
+			self.assertEqual((yield self.dut.reset), 0)
+			self.assertEqual((yield self.dut.blockBegin), 0)
+			self.assertEqual((yield self.dut.blockEnd), 0)
 
 			# Wait for sync to time out
 			yield from self.wait_until_high(self.dut.reset, timeout = 600)
