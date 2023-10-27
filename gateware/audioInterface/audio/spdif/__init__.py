@@ -10,6 +10,11 @@ __all__ = (
 )
 
 class SPDIF(Elaboratable):
+	def __init__(self):
+		self.available = Signal()
+		self.sample = Signal(24)
+		self.sampleValid = Signal()
+
 	def elaborate(self, platform : Platform) -> Module:
 		m = Module()
 		# Grab the S/PDIF bus from the platform
@@ -19,6 +24,10 @@ class SPDIF(Elaboratable):
 		m.submodules.timing = timing = Timing()
 		m.submodules.bmcDecoder = bmcDecoder = BMCDecoder()
 		m.submodules.blockHandler = blockHandler = BlockHandler()
+
+		available = self.available
+		sample = self.sample
+		sampleValid = self.sampleValid
 
 		# Wire them all up to create the completed decoder block
 		m.d.comb += [
@@ -41,6 +50,34 @@ class SPDIF(Elaboratable):
 			blockHandler.blockBeginning.eq(timing.blockBegin),
 			blockHandler.blockComplete.eq(timing.blockEnd),
 			blockHandler.dropBlock.eq(timing.reset),
+
+			sampleValid.eq(blockHandler.dataValid),
+			sample.eq(blockHandler.dataOut),
 		]
+
+		# If we see sync, block begin and then the block handler go valid, mark the source available
+		# until such a time as the block handler indicates it had to drop data
+		with m.FSM():
+			with m.State('WAIT-SYNC'):
+				with m.If(timing.syncing):
+					m.next = 'WAIT-BLOCK'
+
+			with m.State('WAIT-BLOCK'):
+				with m.If(timing.blockBegin):
+					m.next = 'WAIT-DATA'
+				with m.Elif(timing.reset):
+					m.next = 'WAIT-SYNC'
+
+			with m.State('WAIT-DATA'):
+				with m.If(blockHandler.blockValid):
+					m.d.usb += available.eq(1)
+					m.next = 'AVAILABLE'
+				with m.Elif(blockHandler.droppingData):
+					m.next = 'WAIT-SYNC'
+
+			with m.State('AVAILABLE'):
+				with m.If(blockHandler.droppingData):
+					m.d.usb += available.eq(0)
+					m.next = 'WAIT-SYNC'
 
 		return m
