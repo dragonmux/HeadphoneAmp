@@ -2,6 +2,8 @@ from torii import Elaboratable, Module, Signal, Cat, DomainRenamer
 from torii.lib.fifo import SyncFIFO
 from torii.build import Platform
 
+from ..i2s import Channel
+
 class BlockHandler(Elaboratable):
 	'''
 	This handles S/PDIF blocks, validating their metadata, updating the playback engine
@@ -41,6 +43,7 @@ class BlockHandler(Elaboratable):
 
 		bitDepthInvalid = Signal()
 		sampleRateInvalid = Signal()
+		channelTypeInvalid = Signal()
 
 		dropData = Signal()
 		transferData = Signal()
@@ -48,6 +51,7 @@ class BlockHandler(Elaboratable):
 		discardSamplesB = Signal(range(192))
 		bitDepth = Signal(range(24))
 		sampleRate = Signal(range(192000))
+		channelAType = Signal(Channel)
 
 		channelA : SyncFIFO = DomainRenamer({'sync': 'usb'})(SyncFIFO(width = 24, depth = 192, fwft = False))
 		channelB : SyncFIFO = DomainRenamer({'sync': 'usb'})(SyncFIFO(width = 24, depth = 192, fwft = False))
@@ -147,8 +151,23 @@ class BlockHandler(Elaboratable):
 						with m.Default():
 							m.d.comb += sampleRateInvalid.eq(1)
 
-					with m.If(bitDepthInvalid | sampleRateInvalid):
+					# Decode what channel A carries (left or right channel audio)
+					with m.Switch(controlBits[20:24]):
+						with m.Case('1000'):
+							m.d.usb += channelAType.eq(Channel.left)
+						with m.Case('0100'):
+							m.d.usb += channelAType.eq(Channel.right)
+						# If it's not one of left or right, signal it's invalid
+						with m.Default():
+							m.d.comb += channelTypeInvalid.eq(1)
+
+					# If any of the channel information is bad, abort
+					with m.If(bitDepthInvalid | sampleRateInvalid | channelTypeInvalid):
 						m.next = 'ABORT'
+					# If there's a mismatch on the number of samples per channel, abort
+					with m.Elif(samplesA != samplesB):
+						m.next = 'ABORT'
+					# If all is well, continue to transfer
 					with m.Else():
 						m.next = 'START-TRANSFER'
 
