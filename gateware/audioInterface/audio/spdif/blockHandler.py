@@ -43,6 +43,7 @@ class BlockHandler(Elaboratable):
 		sampleRateInvalid = Signal()
 
 		dropData = Signal()
+		transferData = Signal()
 		transferSamplesA = Signal(range(192))
 		transferSamplesB = Signal(range(192))
 		bitDepth = Signal(range(24))
@@ -64,6 +65,7 @@ class BlockHandler(Elaboratable):
 			channelB.w_en.eq(0),
 			channelB.r_en.eq(0),
 			dropData.eq(0),
+			transferData.eq(0),
 			bitDepthInvalid.eq(0),
 			sampleRateInvalid.eq(0),
 		]
@@ -143,6 +145,15 @@ class BlockHandler(Elaboratable):
 
 					with m.If(bitDepthInvalid | sampleRateInvalid):
 						m.next = 'ABORT'
+					with m.Else():
+						m.next = 'START-TRANSFER'
+
+			# Validation succeeded, so indicate to the transfer FSM that it can move the data
+			# from our FIFOs into the I²S block's
+			with m.State('START-TRANSFER'):
+				m.d.comb += transferData.eq(1)
+				m.next = 'WAIT-BLOCK'
+
 			# Buffering of the block has been aborted, either by a parity error or by an abort
 			# from the timing system. Tell the transfer FSM what to do and go back to waiting
 			with m.State('ABORT'):
