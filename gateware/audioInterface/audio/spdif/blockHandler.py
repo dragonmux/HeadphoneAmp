@@ -25,6 +25,11 @@ class BlockHandler(Elaboratable):
 		self.blockComplete = Signal()
 		self.dropBlock = Signal()
 
+		self.blockValid = Signal()
+		self.droppingData = Signal()
+		self.dataOut = Signal()
+		self.dataValid = Signal()
+
 	def elaborate(self, platform : Platform) -> Module:
 		m = Module()
 
@@ -34,6 +39,11 @@ class BlockHandler(Elaboratable):
 		blockBeginning = self.blockBeginning
 		blockComplete = self.blockComplete
 		dropBlock = self.dropBlock
+
+		blockValid = self.blockValid
+		droppingData = self.droppingData
+		dataOut = self.dataOut
+		dataValid = self.dataValid
 
 		parityOk = Signal()
 		blockError = Signal()
@@ -72,6 +82,8 @@ class BlockHandler(Elaboratable):
 			transferData.eq(0),
 			bitDepthInvalid.eq(0),
 			sampleRateInvalid.eq(0),
+			blockValid.eq(transferData),
+			droppingData.eq(dropData)
 		]
 
 		with m.FSM(domain = 'usb', name = 'blockFSM'):
