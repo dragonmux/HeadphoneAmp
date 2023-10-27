@@ -1,5 +1,5 @@
 from torii import Elaboratable, Module, Signal, Cat, DomainRenamer
-from torii.lib.fifo import SyncFIFO
+from torii.lib.fifo import SyncFIFOBuffered
 from torii.build import Platform
 
 from ..i2s import Channel
@@ -68,8 +68,8 @@ class BlockHandler(Elaboratable):
 		sampleRate = Signal(range(192000))
 		channelAType = Signal(Channel)
 
-		channelA : SyncFIFO = DomainRenamer({'sync': 'usb'})(SyncFIFO(width = 24, depth = 192, fwft = False))
-		channelB : SyncFIFO = DomainRenamer({'sync': 'usb'})(SyncFIFO(width = 24, depth = 192, fwft = False))
+		channelA : SyncFIFOBuffered = DomainRenamer({'sync': 'usb'})(SyncFIFOBuffered(width = 24, depth = 192))
+		channelB : SyncFIFOBuffered = DomainRenamer({'sync': 'usb'})(SyncFIFOBuffered(width = 24, depth = 192))
 
 		m.submodules.channelA = channelA
 		m.submodules.channelB = channelB
@@ -259,7 +259,7 @@ class BlockHandler(Elaboratable):
 				with m.Else():
 					m.d.comb += channelA.r_en.eq(1)
 				# Flip the channel used back and check if we've consumed all the samples to transfer
-				m.d.usb  += transferChannel.eq(~transferChannel)
+				m.d.usb += transferChannel.eq(~transferChannel)
 				m.d.comb += dataValid.eq(1)
 				# If we've still got samples, go back to handle the next left channel sample
 				with m.If(transferSamples):
