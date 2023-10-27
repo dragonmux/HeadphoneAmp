@@ -59,6 +59,8 @@ class BlockHandler(Elaboratable):
 		transferData = Signal()
 		discardSamplesA = Signal(range(192))
 		discardSamplesB = Signal(range(192))
+		transferSamples = Signal(range(192))
+		transferChannel = Signal()
 		bitDepth = Signal(range(24))
 		sampleRate = Signal(range(192000))
 		channelAType = Signal(Channel)
@@ -83,7 +85,8 @@ class BlockHandler(Elaboratable):
 			bitDepthInvalid.eq(0),
 			sampleRateInvalid.eq(0),
 			blockValid.eq(transferData),
-			droppingData.eq(dropData)
+			droppingData.eq(dropData),
+			dataValid.eq(0),
 		]
 
 		with m.FSM(domain = 'usb', name = 'blockFSM'):
@@ -203,6 +206,14 @@ class BlockHandler(Elaboratable):
 						discardSamplesB.eq(samplesB),
 					]
 					m.next = 'DROP-DATA'
+				with m.Elif(transferData):
+					m.d.usb += [
+						transferSamples.eq(samplesA),
+						# This sets which channel we start pulling data from
+						# 0 for channel A (A is left) 1 for channel B (A is right)
+						transferChannel.eq(channelAType == Channel.right),
+					]
+					m.next = 'XFER-DATA-L'
 
 			with m.State('DROP-DATA'):
 				with m.If(discardSamplesA):
@@ -219,5 +230,42 @@ class BlockHandler(Elaboratable):
 
 				with m.If((discardSamplesA == 0) & (discardSamplesB == 0)):
 					m.next = 'WAIT-DATA'
+
+			with m.State('XFER-DATA-L'):
+				# Should we pull data from buffer B first? If true, we should
+				with m.If(transferChannel):
+					m.d.comb == channelB.r_en.eq(1)
+				with m.Else():
+					m.d.comb == channelA.r_en.eq(1)
+				# Flip the channel used ready for the right data, mark that we're consuming this sample
+				# (computed as above with manual subtract-with-borrow for speed
+				m.d.usb += [
+					transferChannel.eq(~transferChannel),
+					transferSamples.eq(transferSamples + ((2 ** transferSamples.width) - 1)),
+				]
+				m.d.comb += dataValid.eq(1)
+				m.next = 'XFER-DATA-R'
+
+			with m.State('XFER-DATA-R'):
+				# Should we pull data from buffer B first? If true, we should
+				with m.If(transferChannel):
+					m.d.comb == channelB.r_en.eq(1)
+				with m.Else():
+					m.d.comb == channelA.r_en.eq(1)
+				# Flip the channel used back and check if we've consumed all the samples to transfer
+				m.d.usb  += transferChannel.eq(~transferChannel)
+				m.d.comb += dataValid.eq(1)
+				# If we've still got samples, go back to handle the next left channel sample
+				with m.If(transferSamples):
+					m.next = 'XFER-DATA-L'
+				# Otherwise if we've consumed them all, go back to idle to await more data
+				with m.Else():
+					m.next = 'WAIT-DATA'
+
+		# Connect an approriate channel through to the data output based on the transfer channel value
+		with m.If(transferChannel):
+			m.d.comb += dataOut.eq(channelB.r_data)
+		with m.Else():
+			m.d.comb += dataOut.eq(channelA.r_data)
 
 		return m
