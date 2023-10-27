@@ -38,6 +38,7 @@ class Timing(Elaboratable):
 		self.reset = Signal(reset = 1)
 		self.syncing = Signal(reset = 1)
 		self.blockBegin = Signal()
+		self.blockEnd = Signal()
 		self.frameBegin = Signal()
 		self.channel = Signal()
 		self.bitClock = Signal()
@@ -97,6 +98,8 @@ class Timing(Elaboratable):
 						longTime.eq(longTimer),
 					]
 					m.next = 'SYNC-Z-SHORT1'
+
+				m.d.usb += self.blockEnd.eq(0)
 
 			# Look for the first short bit period of the sync sequence.
 			with m.State('SYNC-Z-SHORT1'):
@@ -223,6 +226,7 @@ class Timing(Elaboratable):
 									m.next = 'SYNC-Y-BEGIN'
 								# If we just finished frame 191, channel B, look for 'Z'
 								with m.Elif(frameCount == 191):
+									m.d.usb += self.blockEnd.eq(1)
 									m.next = 'SYNC-Z-BEGIN'
 								# Otherwise this is channel B, so look for 'X'
 								with m.Else():

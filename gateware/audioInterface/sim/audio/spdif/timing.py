@@ -1,4 +1,3 @@
-from torii.hdl.rec import DIR_FANOUT
 from torii.sim import Settle, Delay
 from torii.test import ToriiTestCase
 
