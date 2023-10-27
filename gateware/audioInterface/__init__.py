@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
+from subprocess import CalledProcessError
 from .platform import AudioInterfacePlatform
 from .interface import AudioInterface
 
@@ -8,6 +9,7 @@ __all__ = (
 
 def cli():
 	from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+	import logging
 
 	# Configure basic logging so it's ready to go from right at the start
 	configureLogging()
@@ -44,7 +46,11 @@ def cli():
 		return 0
 	elif args.action == 'build':
 		platform = AudioInterfacePlatform()
-		platform.build(AudioInterface(), name = 'audioInterface', pnrSeed = args.seed)
+		try:
+			platform.build(AudioInterface(), name = 'audioInterface', pnrSeed = args.seed)
+		except CalledProcessError:
+			logging.error('Synthesising gateware and building bitstream failed, see build logs for details')
+			return 1
 		return 0
 
 def configureLogging():
