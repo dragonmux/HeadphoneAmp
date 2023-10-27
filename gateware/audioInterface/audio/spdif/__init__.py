@@ -14,6 +14,8 @@ class SPDIF(Elaboratable):
 		self.available = Signal()
 		self.sample = Signal(24)
 		self.sampleValid = Signal()
+		self.bitDepth = Signal(range(24))
+		self.sampleRate = Signal(range(192000))
 
 	def elaborate(self, platform : Platform) -> Module:
 		m = Module()
@@ -28,6 +30,8 @@ class SPDIF(Elaboratable):
 		available = self.available
 		sample = self.sample
 		sampleValid = self.sampleValid
+		bitDepth = self.bitDepth
+		sampleRate = self.sampleRate
 
 		# Wire them all up to create the completed decoder block
 		m.d.comb += [
@@ -53,6 +57,8 @@ class SPDIF(Elaboratable):
 
 			sampleValid.eq(blockHandler.dataValid),
 			sample.eq(blockHandler.dataOut),
+			bitDepth.eq(blockHandler.bitDepth),
+			sampleRate.eq(blockHandler.sampleRate),
 		]
 
 		# If we see sync, block begin and then the block handler go valid, mark the source available

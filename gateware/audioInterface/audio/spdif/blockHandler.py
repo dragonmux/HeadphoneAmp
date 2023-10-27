@@ -29,6 +29,8 @@ class BlockHandler(Elaboratable):
 		self.droppingData = Signal()
 		self.dataOut = Signal()
 		self.dataValid = Signal()
+		self.bitDepth = Signal(range(24))
+		self.sampleRate = Signal(range(192000))
 
 	def elaborate(self, platform : Platform) -> Module:
 		m = Module()
@@ -85,7 +87,7 @@ class BlockHandler(Elaboratable):
 			bitDepthInvalid.eq(0),
 			sampleRateInvalid.eq(0),
 			blockValid.eq(transferData),
-			droppingData.eq(dropData),
+			droppingData.eq(0),
 			dataValid.eq(0),
 		]
 
@@ -205,6 +207,7 @@ class BlockHandler(Elaboratable):
 						discardSamplesA.eq(samplesA),
 						discardSamplesB.eq(samplesB),
 					]
+					m.d.comb += droppingData.eq(1)
 					m.next = 'DROP-DATA'
 				with m.Elif(transferData):
 					m.d.usb += [
@@ -212,6 +215,8 @@ class BlockHandler(Elaboratable):
 						# This sets which channel we start pulling data from
 						# 0 for channel A (A is left) 1 for channel B (A is right)
 						transferChannel.eq(channelAType == Channel.right),
+						self.bitDepth.eq(bitDepth),
+						self.sampleRate.eq(sampleRate),
 					]
 					m.next = 'XFER-DATA-L'
 
