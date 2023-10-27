@@ -144,10 +144,10 @@ class BlockHandler(Elaboratable):
 					# Decode the sample bit depth
 					with m.Switch(controlBits[32:36]):
 						# 24-bit words, full word length
-						with m.Case('1101'):
+						with m.Case('1011'):
 							m.d.usb += bitDepth.eq(24)
 						# 20-bit words, minus 4 bits
-						with m.Case('0100'):
+						with m.Case('0010'):
 							m.d.usb += bitDepth.eq(16)
 						# Not one of these two? Don't support it so signal invalid
 						with m.Default():
@@ -157,13 +157,13 @@ class BlockHandler(Elaboratable):
 					with m.Switch(controlBits[24:28]):
 						with m.Case('0000'):
 							m.d.usb += sampleRate.eq(44100)
-						with m.Case('0100'):
+						with m.Case('0010'):
 							m.d.usb += sampleRate.eq(48000)
-						with m.Case('0101'):
+						with m.Case('1010'):
 							m.d.usb += sampleRate.eq(96000)
-						with m.Case('0111'):
+						with m.Case('1110'):
 							m.d.usb += sampleRate.eq(192000)
-						with m.Case('1100'):
+						with m.Case('0011'):
 							m.d.usb += sampleRate.eq(32000)
 						# If it's not one of the valid sample rates, signal it's invalid
 						with m.Default():
@@ -171,9 +171,9 @@ class BlockHandler(Elaboratable):
 
 					# Decode what channel A carries (left or right channel audio)
 					with m.Switch(controlBits[20:24]):
-						with m.Case('1000'):
+						with m.Case('0001'):
 							m.d.usb += channelAType.eq(Channel.left)
-						with m.Case('0100'):
+						with m.Case('0010'):
 							m.d.usb += channelAType.eq(Channel.right)
 						# If it's not one of left or right, signal it's invalid
 						with m.Default():
