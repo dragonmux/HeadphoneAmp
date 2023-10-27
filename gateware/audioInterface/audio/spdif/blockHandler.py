@@ -90,7 +90,7 @@ class BlockHandler(Elaboratable):
 						m.d.usb += controlBits.eq(Cat(controlBits.shift_right(1), dataIn[26]))
 
 					# And stuff the sample into the channel's sample FIFO if valid
-					with m.If(dataIn[24] & parityOk):
+					with m.If((~dataIn[24]) & parityOk):
 						with m.If(~channel):
 							m.d.comb += channelA.w_en.eq(1)
 							m.d.usb += samplesA.eq(samplesA + 1)
@@ -117,10 +117,10 @@ class BlockHandler(Elaboratable):
 				# Likewise if this is compressed or 4-channel PCM data.
 				with m.If(controlBits[0] | controlBits[1] | controlBits[3]):
 					m.next = 'ABORT'
-				# Otherwise copy the sample rate out
+				# Otherwise copy the sample rate and other information out
 				with m.Else():
 					# Decode the sample bit depth
-					with m.Switch(controlBits[32:35]):
+					with m.Switch(controlBits[32:36]):
 						# 24-bit words, full word length
 						with m.Case('1101'):
 							m.d.usb += bitDepth.eq(24)
@@ -132,7 +132,7 @@ class BlockHandler(Elaboratable):
 							m.d.comb += bitDepthInvalid.eq(1)
 
 					# Decode the sample rate
-					with m.Switch(controlBits[24:27]):
+					with m.Switch(controlBits[24:28]):
 						with m.Case('0000'):
 							m.d.usb += sampleRate.eq(44100)
 						with m.Case('0100'):

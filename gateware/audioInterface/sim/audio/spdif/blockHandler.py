@@ -27,18 +27,19 @@ class BlockHandlerTestCase(ToriiTestCase):
 		yield from self.pulse_pos(blockBeginning)
 		for sample in range(192):
 			# Channel A
-			sampleA = 0x1000000 | ((0xca00 | sample) << 8)
+			sampleA = ((0xca00 | sample) << 8)
 			sampleA |= self.computeParity(sampleA)
 			yield dataIn.eq(sampleA)
 			yield channel.eq(0)
 			yield from self.pulse_pos(dataAvailable)
 			# Channel B
-			sampleB = 0x1000000 | ((0xcb00 | sample) << 8)
+			sampleB = ((0xcb00 | sample) << 8)
 			sampleB |= self.computeParity(sampleB)
 			yield dataIn.eq(sampleB)
 			yield channel.eq(1)
 			yield from self.pulse_pos(dataAvailable)
 		yield from self.pulse_pos(blockComplete)
+		yield from self.step(192)
 		yield
 
 # 0x1f00d00
