@@ -44,8 +44,8 @@ class BlockHandler(Elaboratable):
 
 		dropData = Signal()
 		transferData = Signal()
-		transferSamplesA = Signal(range(192))
-		transferSamplesB = Signal(range(192))
+		discardSamplesA = Signal(range(192))
+		discardSamplesB = Signal(range(192))
 		bitDepth = Signal(range(24))
 		sampleRate = Signal(range(192000))
 
@@ -166,27 +166,27 @@ class BlockHandler(Elaboratable):
 
 		with m.FSM(domain = 'usb', name = 'transferFSM'):
 			with m.State('WAIT-DATA'):
-				m.d.usb += [
-					transferSamplesA.eq(samplesA),
-					transferSamplesB.eq(samplesB),
-				]
 				with m.If(dropData):
+					m.d.usb += [
+						discardSamplesA.eq(samplesA),
+						discardSamplesB.eq(samplesB),
+					]
 					m.next = 'DROP-DATA'
 
 			with m.State('DROP-DATA'):
-				with m.If(transferSamplesA):
+				with m.If(discardSamplesA):
 					m.d.comb += channelA.r_en.eq(1)
-					# Compute `transferSamplesA - 1` by manually doing subtract-with-borrow, which turns `- 1`
+					# Compute `discardSamplesA - 1` by manually doing subtract-with-borrow, which turns `- 1`
 					# into `+ ((2 ** width) - 1)` - subtraction is expensive on the iCE40, due to architecture.
-					m.d.usb += transferSamplesA.eq(transferSamplesA + ((2 ** transferSamplesA.width) - 1))
+					m.d.usb += discardSamplesA.eq(discardSamplesA + ((2 ** discardSamplesA.width) - 1))
 
-				with m.If(transferSamplesB):
+				with m.If(discardSamplesB):
 					m.d.comb += channelB.r_en.eq(1)
-					# Compute `transferSamplesB - 1` by manually doing subtract-with-borrow, which turns `- 1`
+					# Compute `discardSamplesB - 1` by manually doing subtract-with-borrow, which turns `- 1`
 					# into `+ ((2 ** width) - 1)` - subtraction is expensive on the iCE40, due to architecture.
-					m.d.usb += transferSamplesB.eq(transferSamplesB + ((2 ** transferSamplesB.width) - 1))
+					m.d.usb += discardSamplesB.eq(discardSamplesB + ((2 ** discardSamplesB.width) - 1))
 
-				with m.If((transferSamplesA == 0) & (transferSamplesB == 0)):
+				with m.If((discardSamplesA == 0) & (discardSamplesB == 0)):
 					m.next = 'WAIT-DATA'
 
 		return m
