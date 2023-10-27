@@ -39,6 +39,10 @@ class BlockHandler(Elaboratable):
 		samplesB = Signal(range(192))
 		controlBits = Signal(192)
 
+		dropData = Signal()
+		transferSamplesA = Signal(range(192))
+		transferSamplesB = Signal(range(192))
+
 		channelA : SyncFIFO = DomainRenamer({'sync': 'usb'})(SyncFIFO(width = 24, depth = 192, fwft = False))
 		channelB : SyncFIFO = DomainRenamer({'sync': 'usb'})(SyncFIFO(width = 24, depth = 192, fwft = False))
 
@@ -54,6 +58,7 @@ class BlockHandler(Elaboratable):
 			channelB.w_data.eq(dataIn[0:24]),
 			channelB.w_en.eq(0),
 			channelB.r_en.eq(0),
+			dropData.eq(0),
 		]
 
 		with m.FSM(domain = 'usb', name = 'blockFSM'):
@@ -104,6 +109,32 @@ class BlockHandler(Elaboratable):
 			# Buffering of the block has been aborted, either by a parity error or by an abort
 			# from the timing system. Tell the transfer FSM what to do and go back to waiting
 			with m.State('ABORT'):
-				pass
+				m.d.comb += dropData.eq(1)
+				m.next = 'WAIT-BLOCK'
+
+		with m.FSM(domain = 'usb', name = 'transferFSM'):
+			with m.State('WAIT-DATA'):
+				m.d.usb += [
+					transferSamplesA.eq(samplesA),
+					transferSamplesB.eq(samplesB),
+				]
+				with m.If(dropData):
+					m.next = 'DROP-DATA'
+
+			with m.State('DROP-DATA'):
+				with m.If(transferSamplesA):
+					m.d.comb += channelA.r_en.eq(1)
+					# Compute `transferSamplesA - 1` by manually doing subtract-with-borrow, which turns `- 1`
+					# into `+ ((2 ** width) - 1)` - subtraction is expensive on the iCE40, due to architecture.
+					m.d.usb += transferSamplesA.eq(transferSamplesA + ((2 ** transferSamplesA.width) - 1))
+
+				with m.If(transferSamplesB):
+					m.d.comb += channelB.r_en.eq(1)
+					# Compute `transferSamplesB - 1` by manually doing subtract-with-borrow, which turns `- 1`
+					# into `+ ((2 ** width) - 1)` - subtraction is expensive on the iCE40, due to architecture.
+					m.d.usb += transferSamplesB.eq(transferSamplesB + ((2 ** transferSamplesB.width) - 1))
+
+				with m.If((transferSamplesA == 0) & (transferSamplesB == 0)):
+					m.next = 'WAIT-DATA'
 
 		return m
