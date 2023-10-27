@@ -8,6 +8,7 @@ class BMCDecoder(Elaboratable):
 	resetting state ready for the next 28 bits.
 	The reset signal cleans internal state and puts things back into the initial state.
 	'''
+
 	def __init__(self):
 		self.reset = Signal()
 		self.dataIn = Signal()
