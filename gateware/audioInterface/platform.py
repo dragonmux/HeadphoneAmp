@@ -65,6 +65,6 @@ class AudioInterfacePlatform(ICE40Platform):
 		program_opts = None, do_program = False, pnrSeed = 0, **kwargs):
 		super().build(
 			elaboratable, name, build_dir, do_build, program_opts, do_program,
-			synth_opts = '-abc9', nextpnr_opts = ['--tmg-ripup', f'--seed={pnrSeed}'],
+			synth_opts = '-abc9', nextpnr_opts = ['--tmg-ripup', f'--seed={pnrSeed}', '--write', f'{name}.pnr.json'],
 			**kwargs
 		)
