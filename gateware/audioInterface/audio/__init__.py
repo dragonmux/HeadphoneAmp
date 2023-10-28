@@ -38,6 +38,8 @@ class AudioStream(Elaboratable):
 
 		with m.If(requestHandler.altModes[1] == 1):
 			m.d.comb += sampleBits.eq(16)
+		with m.Elif(spdif.available):
+			m.d.comb += sampleBits.eq(spdif.bitDepth)
 		with m.Else():
 			m.d.comb += sampleBits.eq(1)
 
@@ -74,6 +76,12 @@ class AudioStream(Elaboratable):
 					sampleSubByte.eq(sampleSubByte + 1),
 					latchSample.eq(0),
 				]
+		with m.Elif(spdif.sampleValid):
+			m.d.usb += [
+				sample[channel].eq(spdif.sample),
+				channel.eq(~channel),
+				latchSample.eq(1),
+			]
 		with m.Else():
 			m.d.usb += latchSample.eq(0)
 
