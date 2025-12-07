@@ -1,4 +1,4 @@
-from torii import Elaboratable, Module, Signal, Array, Cat
+from torii.hdl import Elaboratable, Module, Signal, Array, Cat
 from torii.lib.fifo import AsyncFIFO
 from torii.lib.cdc import FFSynchronizer
 

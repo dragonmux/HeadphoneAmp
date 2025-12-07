@@ -1,4 +1,4 @@
-from torii import Elaboratable, Module, Signal, Cat, DomainRenamer
+from torii.hdl import Elaboratable, Module, Signal, Cat, DomainRenamer
 from torii.lib.fifo import SyncFIFOBuffered
 from torii.build import Platform
 
@@ -68,8 +68,8 @@ class BlockHandler(Elaboratable):
 		sampleRate = Signal(range(192000))
 		channelAType = Signal(Channel)
 
-		channelA : SyncFIFOBuffered = DomainRenamer({'sync': 'usb'})(SyncFIFOBuffered(width = 24, depth = 192))
-		channelB : SyncFIFOBuffered = DomainRenamer({'sync': 'usb'})(SyncFIFOBuffered(width = 24, depth = 192))
+		channelA : SyncFIFOBuffered = DomainRenamer(sync = 'usb')(SyncFIFOBuffered(width = 24, depth = 192))
+		channelB : SyncFIFOBuffered = DomainRenamer(sync = 'usb')(SyncFIFOBuffered(width = 24, depth = 192))
 
 		m.submodules.channelA = channelA
 		m.submodules.channelB = channelB

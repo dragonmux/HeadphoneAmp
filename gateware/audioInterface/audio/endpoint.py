@@ -1,5 +1,5 @@
-from torii import Elaboratable, Module, Signal
-from sol_usb.gateware.usb.usb2.endpoint import EndpointInterface
+from torii.hdl import Elaboratable, Module, Signal
+from torii_usb.usb.usb2.endpoint import EndpointInterface
 
 __all__ = (
 	'AudioEndpoint',
@@ -29,7 +29,7 @@ class AudioEndpoint(Elaboratable):
 
 		m.d.comb += [
 			self.valid.eq(0),
-			self.value.eq(stream.payload),
+			self.value.eq(stream.data),
 		]
 
 		with m.FSM(domain = 'usb'):

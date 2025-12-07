@@ -1,4 +1,4 @@
-git+https://github.com/shrine-maiden-heavy-industries/torii-hdl@main#egg=torii
-git+https://github.com/shrine-maiden-heavy-industries/sol@main#egg=sol-usb
-git+https://github.com/shrine-maiden-heavy-industries/usb-construct@main#egg=usb-construct
+torii>=0.8.0,<1.0
+torii-usb>=0.8.1,<1.0
+usb-construct>=0.2.1,<1.0
 rich>=12.6.0

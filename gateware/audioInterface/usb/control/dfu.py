@@ -1,9 +1,10 @@
-from torii import Module, Signal, Instance, Cat
+from torii.hdl import Module, Signal, Instance, Cat
 from usb_construct.types import USBRequestType, USBRequestRecipient, USBStandardRequests
 from usb_construct.types.descriptors.dfu import DFURequests
-from sol_usb.gateware.usb.usb2.request import USBRequestHandler, SetupPacket
-from sol_usb.gateware.usb.stream import USBInStreamInterface
-from sol_usb.gateware.stream.generator import StreamSerializer
+from torii_usb.usb.usb2.request import USBRequestHandler
+from torii_usb.usb.request.interface import SetupPacket
+from torii_usb.usb.stream import USBInStreamInterface
+from torii_usb.stream.generator import StreamSerializer
 from enum import IntEnum, unique
 
 __all__ = (
@@ -69,7 +70,7 @@ class DFURequestHandler(USBRequestHandler):
 
 			with m.State('HANDLE_GET_STATUS'):
 				m.d.comb += [
-					transmitter.stream.connect(interface.tx),
+					transmitter.stream.attach(interface.tx),
 					transmitter.max_length.eq(6),
 					transmitter.data[0].eq(DFUStatus.ok),
 					Cat(transmitter.data[1:4]).eq(0),
@@ -90,7 +91,7 @@ class DFURequestHandler(USBRequestHandler):
 
 			with m.State('HANDLE_GET_STATE'):
 				m.d.comb += [
-					transmitter.stream.connect(interface.tx),
+					transmitter.stream.attach(interface.tx),
 					transmitter.max_length.eq(1),
 					transmitter.data[0].eq(DFUState.appIdle),
 				]
@@ -108,7 +109,7 @@ class DFURequestHandler(USBRequestHandler):
 
 			with m.State('GET_INTERFACE'):
 				m.d.comb += [
-					transmitter.stream.connect(interface.tx),
+					transmitter.stream.attach(interface.tx),
 					transmitter.max_length.eq(1),
 					transmitter.data[0].eq(0),
 				]

@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
-from torii import Elaboratable, Module, Signal, Memory, DomainRenamer
+from torii.hdl import Elaboratable, Module, Signal, Memory, DomainRenamer
 from struct import pack as structPack, unpack as structUnpack
 from usb_construct.emitters.descriptors.microsoft import PlatformDescriptorCollection
-from sol_usb.gateware.usb.stream import USBInStreamInterface
+from torii_usb.usb.stream import USBInStreamInterface
 from typing import Tuple
 
 __all__ = (
@@ -184,7 +184,7 @@ class GetDescriptorSetHandler(Elaboratable):
 				m.d.comb += [
 					self.tx.valid.eq(1),
 					readPort.addr.eq(descriptorDataBaseAddress + wordInStream),
-					self.tx.payload.eq(readPort.data.word_select((3 - byteInStream).as_unsigned(), 8)),
+					self.tx.data.eq(readPort.data.word_select((3 - byteInStream).as_unsigned(), 8)),
 					self.tx.first.eq(onFirstPacket),
 					self.tx.last.eq(onLastPacket),
 				]
@@ -205,5 +205,5 @@ class GetDescriptorSetHandler(Elaboratable):
 						m.next = 'IDLE'
 
 		if self._domain != 'sync':
-			m = DomainRenamer({'sync': self._domain})(m)
+			m = DomainRenamer(sync = self._domain)(m)
 		return m

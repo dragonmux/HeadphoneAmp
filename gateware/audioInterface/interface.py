@@ -1,4 +1,4 @@
-from torii import Elaboratable, Module, ClockDomain, ResetSignal
+from torii.hdl import Elaboratable, Module, ClockDomain, ResetSignal
 from .usb import USBInterface
 from .audio import AudioStream
 

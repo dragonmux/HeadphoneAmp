@@ -1,14 +1,14 @@
-from torii import Module, Signal, Array, Cat
+from torii.hdl import Module, Signal, Array, Cat
 from usb_construct.types import USBRequestType, USBRequestRecipient, USBStandardRequests
 from usb_construct.types.descriptors.uac3 import (
 	AudioClassSpecificRequestCodes, AudioControlInterfaceControlSelectors, FeatureUnitControlSelectors,
 	Layout2RangeBlock
 )
-from sol_usb.gateware.usb.usb2.request import (
+from torii_usb.usb.usb2.request import (
 	USBRequestHandler, SetupPacket, StallOnlyRequestHandler, USBInStreamInterface, USBOutStreamInterface
 )
-from sol_usb.gateware.stream.generator import StreamSerializer
-from sol_usb.gateware.usb.usb2.deserializer import StreamDeserializer
+from torii_usb.stream.generator import StreamSerializer
+from torii_usb.usb.usb2.deserializer import StreamDeserializer
 from typing import Iterable
 
 __all__ = (
@@ -107,7 +107,7 @@ class AudioRequestHandler(USBRequestHandler):
 				with m.State('GET_INTERFACE'):
 					# Hook up the transmitter ...
 					m.d.comb += [
-						transmitter.stream.connect(interface.tx),
+						transmitter.stream.attach(interface.tx),
 						transmitter.max_length.eq(1),
 					]
 					for idx, altMode in self.altModes.items():
@@ -148,7 +148,7 @@ class AudioRequestHandler(USBRequestHandler):
 
 						# Hook up the transmitter ...
 						m.d.comb += [
-							transmitter.stream.connect(interface.tx),
+							transmitter.stream.attach(interface.tx),
 							Cat(transmitter.data).eq(setting),
 							transmitter.max_length.eq(length),
 						]
@@ -208,7 +208,7 @@ class AudioRequestHandler(USBRequestHandler):
 
 						# Hook up the transmitter ...
 						m.d.comb += [
-							transmitter.stream.connect(interface.tx),
+							transmitter.stream.attach(interface.tx),
 							Cat(transmitter.data).eq(Cat(settingRange)),
 							transmitter.max_length.eq(length),
 						]

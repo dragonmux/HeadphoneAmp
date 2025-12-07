@@ -1,5 +1,5 @@
 from enum import IntEnum
-from torii import Elaboratable, Module, Signal, Array, Cat, ClockSignal
+from torii.hdl import Elaboratable, Module, Signal, Array, Cat, ClockSignal
 from torii.build import Platform
 
 __all__ = (

@@ -1,4 +1,4 @@
-from torii import Elaboratable, Module, Signal, Cat
+from torii.hdl import Elaboratable, Module, Signal, Cat
 from torii.build import Platform
 
 class BMCDecoder(Elaboratable):

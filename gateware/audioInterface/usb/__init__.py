@@ -1,5 +1,5 @@
-from torii import Elaboratable, Module
-from sol_usb.usb2 import USBDevice
+from torii.hdl import Elaboratable, Module
+from torii_usb.usb2 import USBDevice
 from usb_construct.types import USBTransferType, USBSynchronizationType, USBUsageType
 from usb_construct.emitters.descriptors.standard import (
 	DeviceDescriptorCollection, LanguageIDs, DeviceClassCodes, MiscellaneousSubclassCodes,
